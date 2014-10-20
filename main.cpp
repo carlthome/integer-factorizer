@@ -6,28 +6,9 @@
 using namespace std;
 
 #include "sieve_of_eratosthenes.hpp"
+#include "trial_division.hpp"
 
 typedef unsigned long long factor; //TODO Use GMP.
-
-vector<factor> trial_division(const factor& n)
-{
-  vector<factor> factors;
-
-  factor left = n;
-  for (factor i = 2; i < n; ++i)
-  {
-    if (n % i == 0)
-    {
-      while (left % i == 0)
-      {
-        left /= i;
-        factors.push_back(i);
-      }
-    }
-  }
-
-  return factors;
-}
 
 clock_t start = clock();
 int main()
