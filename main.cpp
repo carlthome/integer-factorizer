@@ -59,9 +59,11 @@ vector<factor> trial_division(const factor& n)
 }
 
 clock_t start = clock();
-int main()
-{ 
-  factor n = 100;
+int main(int argc, char* argv[])
+{
+  if (argc != 2) cerr << "Missing argument." << endl;
+  string arg1 = argv[1];
+  factor n = strtol(arg1.c_str(), NULL, 10); // TODO Use GMP.
   auto factors = sieve_of_eratosthenes(n);
   cout << "Composite number: " << n << endl;
   cout << "No. of factors found: " << factors.size() << endl;
