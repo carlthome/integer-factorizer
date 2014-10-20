@@ -36,7 +36,8 @@ inline vector<mpz_class> sieve_of_atkin(const mpz_class& n)
         k = k1 + y * y;
         if (k >= n) break;
         is_prime[k.get_ui()] = !is_prime[k.get_ui()];
-        y += seq[(++i & 1)];
+        mpz_class tmp = ++i & 1;
+        y += seq[tmp.get_ui()];
       }
     }
     else
@@ -64,7 +65,8 @@ inline vector<mpz_class> sieve_of_atkin(const mpz_class& n)
       k = k1 + y * y;
       if (k >= n) break;
       is_prime[k.get_ui()] = !is_prime[k.get_ui()];
-      y += seq[(++i & 1)];
+        mpz_class tmp = ++i & 1;
+        y += seq[tmp.get_ui()];
     }
     x += 2;
   }
@@ -87,7 +89,8 @@ inline vector<mpz_class> sieve_of_atkin(const mpz_class& n)
     {
       k = k1 - y * y;
       if (k < n) is_prime[k.get_ui()] = !is_prime[k.get_ui()];
-      y += seq[(++i & 1)];
+        mpz_class tmp = ++i & 1;
+        y += seq[tmp.get_ui()];
     }
     x++;
   }
@@ -104,7 +107,7 @@ inline vector<mpz_class> sieve_of_atkin(const mpz_class& n)
       mpz_class n2 = n * n;
       for (k = n2; k < n; k += n2)
       {
-        is_prime[k] = false;
+        is_prime[k.get_ui()] = false;
       }
     }
   }

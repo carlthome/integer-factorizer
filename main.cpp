@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
   vector<pair<string, function<vector<mpz_class>(mpz_class)>>> factorization_algorithms = {
     {"Trial Division", trial_division},
     {"Sieve of Eratosthenes", sieve_of_eratosthenes},
-    {"Sieve of Atkin", sieve_of_atkin<},
+    {"Sieve of Atkin", sieve_of_atkin},
   };
 
   for (auto p : factorization_algorithms)
