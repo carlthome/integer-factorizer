@@ -1,16 +1,15 @@
 #pragma once
 #include <vector>
-#include <cmath>
+#include <climits>
 using namespace std;
 
-template <typename T>
-inline vector<T> sieve_of_atkin(const T& n)
+inline vector<mpz_class> sieve_of_atkin(const mpz_class& n)
 {
-  T x, y, i;
+  mpz_class x, y, i;
   
   auto remaining = n;
-  vector<T> factors;
-  auto factorize = [&remaining, &factors] (T factor) {
+  vector<mpz_class> factors;
+  auto factorize = [&remaining, &factors] (mpz_class factor) {
     while (remaining % factor == 0)
     {
       remaining /= factor;
@@ -18,10 +17,10 @@ inline vector<T> sieve_of_atkin(const T& n)
     }
   };  
   
-  vector<bool> is_prime(n, false);
+  vector<bool> is_prime(n.get_ui(), false);
 
-  T seq[] = {2, 4};
-  T k1 = 0, k = 0;
+  mpz_class seq[] = {2, 4};
+  mpz_class k1 = 0, k = 0;
  
   x = 1;
   y = 0;
@@ -36,7 +35,7 @@ inline vector<T> sieve_of_atkin(const T& n)
       {
         k = k1 + y * y;
         if (k >= n) break;
-        is_prime[k] = !is_prime[k];
+        is_prime[k.get_ui()] = !is_prime[k.get_ui()];
         y += seq[(++i & 1)];
       }
     }
@@ -46,7 +45,7 @@ inline vector<T> sieve_of_atkin(const T& n)
       {
         k = k1 + y * y;
         if (k >= n) break;
-        is_prime[k] = !is_prime[k];
+        is_prime[k.get_ui()] = !is_prime[k.get_ui()];
         y += 2;
       }
     }
@@ -64,7 +63,7 @@ inline vector<T> sieve_of_atkin(const T& n)
     {
       k = k1 + y * y;
       if (k >= n) break;
-      is_prime[k] = !is_prime[k];
+      is_prime[k.get_ui()] = !is_prime[k.get_ui()];
       y += seq[(++i & 1)];
     }
     x += 2;
@@ -87,7 +86,7 @@ inline vector<T> sieve_of_atkin(const T& n)
     while (y < x)
     {
       k = k1 - y * y;
-      if (k < n) is_prime[k] = !is_prime[k];
+      if (k < n) is_prime[k.get_ui()] = !is_prime[k.get_ui()];
       y += seq[(++i & 1)];
     }
     x++;
@@ -102,7 +101,7 @@ inline vector<T> sieve_of_atkin(const T& n)
     if (is_prime[j])
     {
       factorize(j);
-      T n2 = n * n;
+      mpz_class n2 = n * n;
       for (k = n2; k < n; k += n2)
       {
         is_prime[k] = false;

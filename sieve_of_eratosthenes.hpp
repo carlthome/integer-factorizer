@@ -1,14 +1,13 @@
 #pragma once
 #include <vector>
-#include <cmath>
+#include <climits>
 using namespace std;
 
-template <typename T>
-inline vector<T> sieve_of_eratosthenes(const T& n)
+inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
 {
   auto remaining = n;
-  vector<T> factors;
-  vector<bool> is_prime (n, true);
+  vector<mpz_class> factors;
+  vector<bool> is_prime (n.get_ui(), true);
   
   is_prime[0] = false;
   is_prime[1] = false;

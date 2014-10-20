@@ -5,24 +5,23 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <gmpxx.h>
 #include "trial_division.hpp"
 #include "sieve_of_eratosthenes.hpp"
 #include "sieve_of_atkin.hpp"
 using namespace std;
-
-typedef unsigned long long factor; //TODO Use GMP.
 
 clock_t start = clock();
 int main(int argc, char* argv[])
 {
   if (argc != 2) cerr << "Missing argument." << endl;
   string arg1 = argv[1];
-  factor n = strtol(arg1.c_str(), NULL, 10); // TODO Use GMP.
+  mpz_class n(arg1.c_str()); // TODO Use GMP.
   
-  vector<pair<string, function<vector<factor>(factor)>>> factorization_algorithms = {
-    {"Trial Division", trial_division<factor>},
-    {"Sieve of Eratosthenes", sieve_of_eratosthenes<factor>},
-    {"Sieve of Atkin", sieve_of_atkin<factor>},
+  vector<pair<string, function<vector<mpz_class>(mpz_class)>>> factorization_algorithms = {
+    {"Trial Division", trial_division},
+    {"Sieve of Eratosthenes", sieve_of_eratosthenes},
+    {"Sieve of Atkin", sieve_of_atkin<},
   };
 
   for (auto p : factorization_algorithms)
@@ -31,7 +30,7 @@ int main(int argc, char* argv[])
     const auto& factorization_algorithm = p.second;
     cout << name << ':' << endl;
 
-    vector<factor> factors = factorization_algorithm(n);
+    vector<mpz_class> factors = factorization_algorithm(n);
 
     cout << "  - Composite number: " << n << endl;
     cout << "  - No. of factors found: " << factors.size() << endl;

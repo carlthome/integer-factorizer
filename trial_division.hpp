@@ -3,13 +3,12 @@
 #include <cmath>
 using namespace std;
 
-template <typename T>
-inline vector<T> trial_division(const T& n)
+inline vector<mpz_class> trial_division(const mpz_class& n)
 {
-  vector<T> factors;
+  vector<mpz_class> factors;
 
-  T left = n;
-  for (T i = 2; i < n; ++i)
+  mpz_class left = n;
+  for (mpz_class i = 2; i < n; ++i)
   {
     if (n % i == 0)
     {
