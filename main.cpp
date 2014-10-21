@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
   }
   
   string arg1 = argv[1];
-  const factor n = strtol(arg1.c_str(), NULL, 10);
+  const factor n = mpz_class(arg1.c_str());
   
   auto go = [] (factor n, string name, function<vector<factor>(factor)> factorization_algorithm) {
     vector<factor> factors = factorization_algorithm(n);
