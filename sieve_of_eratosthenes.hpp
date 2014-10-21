@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <climits>
-#include <iostream>
 using namespace std;
 
 inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
@@ -16,7 +15,6 @@ inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
   if (tmp.fits_uint_p() && tmp < limit)
   {
     limit = tmp.get_ui();
-    cout << "limit now: " << limit << endl;
   }
 
   vector<bool> is_prime (limit, true);
