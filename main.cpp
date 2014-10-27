@@ -10,12 +10,14 @@
 #include "trial_division.hpp"
 #include "sieve_of_eratosthenes.hpp"
 #include "sieve_of_atkin.hpp"
+#include "fermat_factorization.hpp"
 using namespace std;
 typedef mpz_class factor;
 map<string, function<vector<factor>(factor)>> factorization_algorithms = {
   {"Trial Division", trial_division},
   {"Sieve of Eratosthenes", sieve_of_eratosthenes},
   {"Sieve of Atkin", sieve_of_atkin},
+  {"Fermat Factorization", fermat_factorization},
 };
 
 clock_t start = clock();
