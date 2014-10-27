@@ -11,6 +11,7 @@
 #include "sieve_of_eratosthenes.hpp"
 #include "sieve_of_atkin.hpp"
 #include "fermat_factorization.hpp"
+#include "utils.hpp"
 using namespace std;
 typedef mpz_class factor;
 map<string, function<vector<factor>(factor)>> factorization_algorithms = {
