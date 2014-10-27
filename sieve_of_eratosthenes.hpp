@@ -10,7 +10,7 @@ inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
 
   unsigned int limit = pow(2, 26);
   mpz_class tmp;
-  mpz_root(tmp.get_mpz_t(), n.get_mpz_t(), 2);
+  mpz_sqrt(tmp.get_mpz_t(), n.get_mpz_t());
   tmp++;
   if (tmp.fits_uint_p() && tmp < limit)
   {
