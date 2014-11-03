@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include "utils.hpp"
-#include <iostream>
 using namespace std;
 
 inline vector<mpz_class> pollard_rho(const mpz_class& n)
@@ -38,6 +37,9 @@ inline vector<mpz_class> pollard_rho(const mpz_class& n)
   }
 
   factors.push_back(h);
-  factors.push_back(n / h);
+  if (n != h)
+  {
+    factors.push_back(n / h);
+  }
   return factors;
 }
