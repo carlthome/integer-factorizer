@@ -8,8 +8,9 @@ inline mpz_class gcd_iter(const mpz_class& a, const mpz_class& b)
   mpz_class t, u, v;
   u = a;
   v = b;
+  auto zero = mpz_class(0);
 
-  while (v)
+  while (v != zero)
   {
     t = u;
     u = v;
