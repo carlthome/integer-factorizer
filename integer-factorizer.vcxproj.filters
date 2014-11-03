@@ -27,7 +27,7 @@
     <ClInclude Include="fermat_factorization.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sieve_of_atkin.hpp">
+    <ClInclude Include="pollard_rho.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

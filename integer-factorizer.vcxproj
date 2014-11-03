@@ -70,7 +70,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="fermat_factorization.hpp" />
-    <ClInclude Include="sieve_of_atkin.hpp" />
+    <ClInclude Include="pollard_rho.hpp" />
     <ClInclude Include="sieve_of_eratosthenes.hpp" />
     <ClInclude Include="trial_division.hpp" />
     <ClInclude Include="utils.hpp" />

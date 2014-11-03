@@ -9,7 +9,6 @@
 #include <mpirxx.h>
 #include "trial_division.hpp"
 #include "sieve_of_eratosthenes.hpp"
-#include "sieve_of_atkin.hpp"
 #include "fermat_factorization.hpp"
 #include "pollard_rho.hpp"
 #include "utils.hpp"
@@ -18,7 +17,6 @@ typedef mpz_class factor;
 map<string, function<vector<factor>(factor)>> factorization_algorithms = {
   {"Trial Division", trial_division},
   {"Sieve of Eratosthenes", sieve_of_eratosthenes},
-  {"Sieve of Atkin", sieve_of_atkin},
   {"Fermat Factorization", fermat_factorization},
   {"Pollard Rho", pollard_rho},
 };
@@ -48,7 +46,7 @@ start:
     cout << "  - Composite number: " << n << endl;
     cout << "  - No. of factors found: " << factors.size() << endl;
     cout << "  - Runtime: " << (double)(clock() - start) / CLOCKS_PER_SEC << " seconds" << endl;
-    cout << "  - Factors:";
+    cout << "  - Factors: ";
     for (auto f : factors) cout << f << ", ";
     cout << endl << endl;
   };
