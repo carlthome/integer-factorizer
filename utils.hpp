@@ -35,6 +35,10 @@ inline mpz_class gcd_iter(const mpz_class& a, const mpz_class& b)
 // return true if it PROBABLY is prime
 inline bool miller_rabin_prime(const mpz_class & n, unsigned int k)
 {
+  if (n <= mpz_class(3))
+  {
+    return true;
+  }
   if (mpz_odd_p(n.get_mpz_t()) == 0)
   {
     return false;
