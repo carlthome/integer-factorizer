@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
-#include <gmpxx.h>
+#include <mpirxx.h>
 #include "trial_division.hpp"
 #include "sieve_of_eratosthenes.hpp"
 #include "sieve_of_atkin.hpp"
