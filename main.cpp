@@ -25,7 +25,15 @@ int main(int argc, char* argv[])
   while (!todo.empty())
   {
     auto& next = todo.front();
-    auto factors = pollard_rho(next);
+    vector<mpz_class> factors;
+    if (next > 1000)
+    {
+      factors = pollard_rho(next);
+    }
+    else
+    {
+      factors = sieve_of_eratosthenes(next);
+    }
 
     for (auto& fac : factors)
     {
