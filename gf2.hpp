@@ -2,6 +2,23 @@
 #include <vector>
 #include <string>
 
+namespace
+{
+  // finds the least significant bit, returns ~0 if number is 0
+  unsigned int find_first_set(ulong val) {
+    // remove all bits above lowest bit
+    val &= -val;
+
+    unsigned int index = -1;
+    while (val != 0)
+    {
+      val >>= 1;
+      index++;
+    }
+    return index;
+  }
+}
+
 class gf2
 {
   unsigned int rows, cols, ulong_width;
