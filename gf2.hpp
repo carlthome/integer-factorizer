@@ -25,7 +25,7 @@ class gf2
   std::vector<std::vector<ulong>> matrix;
   public:
     gf2(unsigned int rows, unsigned int cols)
-      :  rows(rows), cols(cols), ulong_width(sizeof(ulong) * 8),
+      : rows(rows), cols(cols), ulong_width(sizeof(ulong) * 8),
         matrix(cols, std::vector<ulong>(rows, 0))
     {
     }
@@ -35,7 +35,7 @@ class gf2
       return (matrix[col][row / ulong_width] & (1 << row % ulong_width)) > 0;
     }
 
-    void add_bit(unsigned int row, unsigned int col, bool value)
+    void add_bit(unsigned int row, unsigned int col)
     {
       matrix[col][row / ulong_width] ^= (1 << row % ulong_width);
     }
