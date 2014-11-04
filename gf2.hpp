@@ -32,12 +32,12 @@ class gf2
 
     bool get_bit(unsigned int row, unsigned int col)
     {
-      return (matrix[col][row / ulong_width] & (1 << row % ulong_width)) > 0;
+      return (matrix[col][row / ulong_width] & ((ulong)1 << row % ulong_width)) > 0;
     }
 
     void add_bit(unsigned int row, unsigned int col)
     {
-      matrix[col][row / ulong_width] ^= (1 << row % ulong_width);
+      matrix[col][row / ulong_width] ^= (ulong)1 << row % ulong_width;
     }
 
     // col1 = col1 + col2
@@ -54,26 +54,28 @@ class gf2
       std::vector<unsigned int> marks;
       for (unsigned int j = 0; j < cols; j++)
       {
-        for (unsigned int i = 0; i < rows; i++)
+        for (unsigned int row = 0; row <= rows / ulong_width; row++)
         {
-          if (get_bit(i, j) == true)
+          if (matrix[j][row] == 0)
           {
-            marks.push_back(i);
-
-            for (unsigned int k = 0; k < cols; k++)
-            {
-              if (k == j)
-              {
-                continue;
-              }
-
-              if (get_bit(i, k) == true)
-              {
-                add_columns(k, j);
-              }
-            }
-            break;
+            continue;
           }
+          unsigned int i = find_first_set(matrix[j][row]);
+          marks.push_back(i);
+
+          for (unsigned int k = 0; k < cols; k++)
+          {
+            if (k == j)
+            {
+              continue;
+            }
+
+            if (get_bit(i, k) == true)
+            {
+              add_columns(k, j);
+            }
+          }
+          break;
         }
       }
 
