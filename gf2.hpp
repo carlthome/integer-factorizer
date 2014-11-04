@@ -88,6 +88,11 @@ class gf2
 
       for (unsigned int row = 0; row < rows; row++)
       {
+        if (row % ulong_width == 0)
+        {
+          res += "row " + std::to_string(row) + "\n";
+        }
+
         for (unsigned int col = 0; col < cols; col++)
         {
           res += get_bit(row, col) ? "1 " : "0 ";
