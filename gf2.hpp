@@ -19,6 +19,9 @@ namespace
   }
 }
 
+// based on "A Fast Algorithm for Gaussian Elimination over GF(2)"
+// https://www.cs.umd.edu/~gasarch/TOPICS/factoring/fastgauss.pdf
+
 class gf2
 {
   unsigned int rows, cols, ulong_width;
