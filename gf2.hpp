@@ -99,7 +99,6 @@ class gf2
         res.push_back(row);
         for (unsigned int col = 0; col < cols; col++)
         {
-          // TODO: optimize this with a bit shift loop
           if (get_bit(row, col))
           {
             res.push_back(dependencies[col]);
