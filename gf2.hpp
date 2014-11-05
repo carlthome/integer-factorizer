@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <set>
 #include <string>
 
 namespace
@@ -52,9 +53,11 @@ class gf2
       }
     }
 
-    std::vector<unsigned int> fast_gauss()
+    std::vector<std::vector<unsigned int>> fast_gauss()
     {
-      std::vector<unsigned int> marks;
+      auto dependencies = std::vector<unsigned int>(cols, ~0);
+      auto marks = std::set<unsigned int>();
+
       for (unsigned int j = 0; j < cols; j++)
       {
         for (unsigned int row = 0; row <= rows / ulong_width; row++)
@@ -64,7 +67,9 @@ class gf2
             continue;
           }
           unsigned int i = find_first_set(matrix[j][row]);
-          marks.push_back(i);
+          marks.insert(i);
+          // keep track of dependencies so we don't have to recalculate them later
+          dependencies[j] = i + row * ulong_width;
 
           for (unsigned int k = 0; k < cols; k++)
           {
@@ -81,8 +86,30 @@ class gf2
           break;
         }
       }
+      auto result = std::vector<std::vector<unsigned int>>();
 
-      return marks;
+      for (unsigned int row = 0; row < rows; row++)
+      {
+        if (marks.count(row) != 0)
+        {
+          continue;
+        }
+        auto res = std::vector<unsigned int>();
+
+        res.push_back(row);
+        for (unsigned int col = 0; col < cols; col++)
+        {
+          // TODO: optimize this with a bit shift loop
+          if (get_bit(row, col))
+          {
+            res.push_back(dependencies[col]);
+          }
+        }
+
+        result.push_back(res);
+      }
+
+      return result;
     }
 
     std::string to_string()
