@@ -114,17 +114,13 @@ class gf2
     std::string to_string()
     {
       std::string res;
+      res += std::to_string(rows) + " " + std::to_string(cols) + "\n";
 
       for (unsigned int row = 0; row < rows; row++)
       {
-        if (row % ulong_width == 0)
-        {
-          res += "row " + std::to_string(row) + "\n";
-        }
-
         for (unsigned int col = 0; col < cols; col++)
         {
-          res += get_bit(row, col) ? "1 " : "0 ";
+          res += get_bit(row, col) ? "1" : "0";
         }
         res += "\n";
       }
