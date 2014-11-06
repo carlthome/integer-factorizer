@@ -36,12 +36,12 @@ class gf2
 
     bool get_bit(unsigned int row, unsigned int col)
     {
-      return (matrix[col][row / ulong_width] & ((ulong)1 << row % ulong_width)) > 0;
+      return (matrix[col][row / ulong_width] & (1L << row % ulong_width)) > 0;
     }
 
     void add_bit(unsigned int row, unsigned int col)
     {
-      matrix[col][row / ulong_width] ^= (ulong)1 << row % ulong_width;
+      matrix[col][row / ulong_width] ^= 1L << row % ulong_width;
     }
 
     // col1 = col1 + col2
@@ -78,7 +78,7 @@ class gf2
               continue;
             }
 
-            if (get_bit(i, k) == true)
+            if (get_bit(i, k))
             {
               add_columns(k, j);
             }
