@@ -66,7 +66,7 @@ class gf2
           {
             continue;
           }
-          unsigned int i = find_first_set(matrix[j][row]);
+          unsigned int i = find_first_set(matrix[j][row]) + row * ulong_width;
           marks.insert(i);
           // keep track of dependencies so we don't have to recalculate them later
           dependencies[j] = i + row * ulong_width;
