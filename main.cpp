@@ -15,13 +15,12 @@
 using namespace std;
 typedef mpz_class factor;
 map<string, function<vector<factor>(factor)>> factorization_algorithms = {
-  {"Trial Division", trial_division},
-  {"Sieve of Eratosthenes", sieve_of_eratosthenes},
-  {"Fermat Factorization", fermat_factorization},
-  {"Pollard Rho", pollard_rho},
+  { "Trial Division", trial_division },
+  { "Sieve of Eratosthenes", sieve_of_eratosthenes },
+  { "Fermat Factorization", fermat_factorization },
+  { "Pollard Rho", pollard_rho },
 };
 
-clock_t start = clock();
 int main(int argc, char* argv[])
 {
 start:
@@ -41,11 +40,13 @@ start:
 
   auto go = [](factor n, string name, function<vector<factor>(factor)> factorization_algorithm)
   {
-    vector<factor> factors = factorization_algorithm(n);
+    auto start = clock();
+    auto factors = factorization_algorithm(n);
+    auto runtime = (clock() - start) / (double)CLOCKS_PER_SEC;
     cout << name << ':' << endl;
     cout << "  - Composite number: " << n << endl;
     cout << "  - No. of factors found: " << factors.size() << endl;
-    cout << "  - Runtime: " << (double)(clock() - start) / CLOCKS_PER_SEC << " seconds" << endl;
+    cout << "  - Runtime: " << runtime << " seconds" << endl;
     cout << "  - Factors: ";
     for (auto f : factors) cout << f << ", ";
     cout << endl << endl;
