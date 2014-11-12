@@ -11,6 +11,7 @@
 #include "sieve_of_eratosthenes.hpp"
 #include "fermat_factorization.hpp"
 #include "pollard_rho.hpp"
+#include "quadratic_sieve.hpp"
 #include "utils.hpp"
 using namespace std;
 typedef mpz_class factor;
@@ -19,6 +20,7 @@ map<string, function<vector<factor>(factor)>> factorization_algorithms = {
   { "Sieve of Eratosthenes", sieve_of_eratosthenes },
   { "Fermat Factorization", fermat_factorization },
   { "Pollard Rho", pollard_rho },
+  { "Quadratic Sieve", quadratic_sieve },
 };
 
 int main(int argc, char* argv[])
