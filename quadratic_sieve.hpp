@@ -9,7 +9,7 @@ namespace
   unsigned int optimal_B(const mpz_class& n)
   {
     // reference: http://www.andrew-g-west.com/docs/thesis_slides.pdf
-    auto digits = mpz_sizeinbase(n.get_mpz_t(), 10)
+    auto digits = mpz_sizeinbase(n.get_mpz_t(), 10);
     if (digits <= 35)
       return 17023;
     else if (digits <= 40)
@@ -39,7 +39,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
   // round up instead of down
   a++;
   // ~magic number~, needs to be different for different n
-  B = optimal_B(n);
+  auto B = optimal_B(n);
   
 
 
