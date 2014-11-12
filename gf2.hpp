@@ -53,7 +53,7 @@ class gf2
       }
     }
 
-    std::vector<std::vector<unsigned int>> fast_gauss()
+    std::vector<std::set<unsigned int>> fast_gauss()
     {
       auto dependencies = std::vector<unsigned int>(cols, ~0);
       auto marks = std::set<unsigned int>();
@@ -69,7 +69,7 @@ class gf2
           unsigned int i = find_first_set(matrix[j][row]) + row * ulong_width;
           marks.insert(i);
           // keep track of dependencies so we don't have to recalculate them later
-          dependencies[j] = i + row * ulong_width;
+          dependencies[j] = i;
 
           for (unsigned int k = 0; k < cols; k++)
           {
@@ -86,7 +86,7 @@ class gf2
           break;
         }
       }
-      auto result = std::vector<std::vector<unsigned int>>();
+      auto result = std::vector<std::set<unsigned int>>();
 
       for (unsigned int row = 0; row < rows; row++)
       {
@@ -94,14 +94,14 @@ class gf2
         {
           continue;
         }
-        auto res = std::vector<unsigned int>();
 
-        res.push_back(row);
+        auto res = std::set<unsigned int>();
+        res.insert(row);
         for (unsigned int col = 0; col < cols; col++)
         {
           if (get_bit(row, col))
           {
-            res.push_back(dependencies[col]);
+            res.insert(dependencies[col]);
           }
         }
 
