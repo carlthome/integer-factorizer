@@ -30,7 +30,7 @@ class gf2
   public:
     gf2(unsigned int rows, unsigned int cols)
       : rows(rows), cols(cols), ulong_width(sizeof(ulong) * 8),
-        matrix(cols, std::vector<ulong>(rows, 0))
+        matrix(cols, std::vector<ulong>((rows - 1) / ulong_width + 1, 0))
     {
     }
 
