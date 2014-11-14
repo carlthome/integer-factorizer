@@ -17,7 +17,7 @@ using namespace std;
 typedef mpz_class factor;
 map<string, function<vector<factor>(factor)>> factorization_algorithms = {
   { "Trial Division", trial_division },
-  { "Sieve of Eratosthenes", sieve_of_eratosthenes },
+  { "Sieve of Eratosthenes", sieve_of_eratosthenes_factorization },
   { "Fermat Factorization", fermat_factorization },
   { "Pollard Rho", pollard_rho },
   { "Quadratic Sieve", quadratic_sieve },

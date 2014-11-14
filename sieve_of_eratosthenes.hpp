@@ -3,7 +3,7 @@
 #include <climits>
 using namespace std;
 
-inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
+inline vector<mpz_class> sieve_of_eratosthenes_factorization(const mpz_class& n)
 {
   mpz_class remaining = n;
   vector<mpz_class> factors;
@@ -42,4 +42,27 @@ inline vector<mpz_class> sieve_of_eratosthenes(const mpz_class& n)
   if (remaining > 1) factors.push_back(remaining);
 
   return factors;
+}
+
+inline vector<int> sieve_of_eratosthenes(unsigned int B)
+{
+  vector<int> primes;
+  vector<bool> is_prime (B, true);
+
+  is_prime[0] = false;
+  is_prime[1] = false;
+  for (int i = 2; i < B; i++)
+  {
+    if (is_prime[i])
+    {
+      primes.push_back(i);
+
+      for (int j = i*i; j < B; j += i)
+      {
+        is_prime[j] = false;
+      }
+    }
+  }
+
+  return primes;
 }
