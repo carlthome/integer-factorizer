@@ -4,15 +4,17 @@
 using namespace std;
 
 // solves the congruence x^2 = n (mod p)
-inline pair<unsigned int, unsigned int> tonelli_shanks(unsigned int n, unsigned int p)
+inline pair<unsigned int, unsigned int> tonelli_shanks(unsigned int n_, unsigned int p_)
 {
-  if (p == 2)
+  if (p_ == 2)
   {
-    return {n, n};
+    return {n_, n_};
   }
+  unsigned long int p = p_;
+  unsigned long int n = n_;
 
-  unsigned int S = 0;
-  unsigned int Q = p - 1;
+  unsigned long int S = 0;
+  unsigned long int Q = p - 1;
 
   while (Q % 2 == 0)
   {
@@ -20,27 +22,27 @@ inline pair<unsigned int, unsigned int> tonelli_shanks(unsigned int n, unsigned 
     S++;
   }
 
-  unsigned int z = 2;
+  unsigned long int z = 2;
 
   while (legendre_symbol(z, p) != -1)
   {
     z++;
   }
 
-  unsigned int c = powm(z, Q, p);
-  unsigned int R = powm(n, (Q + 1) / 2, p);
-  unsigned int t = powm(n, Q, p);
-  unsigned int M = S;
+  unsigned long int c = powm(z, Q, p);
+  unsigned long int R = powm(n, (Q + 1) / 2, p);
+  unsigned long int t = powm(n, Q, p);
+  unsigned long int M = S;
 
   while (t % p != 1)
   {
-    unsigned int i = 1;
-    while (powm(t, (unsigned int)pow(2, i), p) != 1)
+    unsigned long int i = 1;
+    while (powm<unsigned long int>(t, pow(2, i), p) != 1)
     {
       i++;
     }
 
-    unsigned int b = powm(c, (unsigned int)pow(2, M - i - 1), p);
+    unsigned long int b = powm<unsigned long int>(c, pow(2, M - i - 1), p);
     R = R * b % p;
     t = t * b * b % p;
     c = b * b % p;
