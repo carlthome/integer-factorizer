@@ -5,7 +5,7 @@ using namespace std;
 template <class Num>
 inline int legendre_symbol(const Num& a, const Num& p)
 {
-  auto t = powm<Num>(a, (p - 1) / 2, p);
+  auto t = powm(a, (p - 1) / 2, p);
 
   if (t > 1)
   {
