@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include "utils.hpp"
 #include "tonelli_shanks.hpp"
+#include "gf2.hpp"
 #include <iostream>
 using namespace std;
 
@@ -52,6 +54,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
   // TODO: try this when it works
   //primes.insert(primes.begin(), -1);
 
+  cout << "calculating factor base from " << primes.size() << " primes" << endl;
   auto factor_base = vector<unsigned int>();
   for (unsigned int i = 0; i < primes.size(); i++)
   {
@@ -65,6 +68,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
   auto factor_base_indices = vector<vector<unsigned int>>(2, vector<unsigned int>(factor_base.size()));
   auto sqrt_n = sqrt(n);
 
+  cout << "finding sieving indices" << endl;
   // find sieving indices for each factor base number
   for (unsigned int p = 0; p < factor_base.size(); p++)
   {
@@ -81,7 +85,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
     factor_base_indices[1][p] = tmp.get_ui();
   }
 
-  auto Y = vector<float>(M * 2);
+  auto Y = vector<float>(CHUNK_SIZE);
 
   auto X = vector<unsigned int>();
   auto smooth = vector<vector<unsigned int>>();
@@ -91,6 +95,8 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
   // to make sure that we get a dependancy that factorizes n
   while (smooth.size() < (factor_base.size() + 20))
   {
+    cout << "sieving, chunk " << start / CHUNK_SIZE << ", ";
+    cout << smooth.size() << " of " << factor_base.size() + 20 << endl;
     for (unsigned int t = 1; t < CHUNK_SIZE; t++)
     {
       // y = (sqrt(n) + x)^2 - n
@@ -158,6 +164,45 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
 
     start += CHUNK_SIZE;
     end += CHUNK_SIZE;
+  }
+  cout << "transferring to matrix" << endl;
+
+  auto matrix = gf2(smooth.size(), factor_base.size());
+  // for each smooth number
+  for (unsigned int s = 0; s < smooth.size(); s++)
+  {
+    // and for each factor in that smooth number
+    for (unsigned int p = 0; p < smooth[s].size(); p++)
+    {
+      matrix.add_bit(s, smooth[s][p]);
+    }
+  }
+
+  cout << "doing gauss elimination" << endl;
+
+  auto dependencies = matrix.fast_gauss();
+
+  cout << "finding squares" << endl;
+  for (unsigned int d = 0; d < dependencies.size(); d++)
+  {
+    mpz_class R = 1;
+    for (unsigned int i = 0; i < dependencies[d].size(); i++)
+    {
+      R *= X[dependencies[d][i]];
+    }
+    R = sqrt(R);
+
+    mpz_class b = 1;
+    for (unsigned int i = 0; i < smooth[dependencies[d][0]].size(); i++)
+    {
+      b *= smooth[dependencies[d][0]][i];
+    }
+    auto gcd = gcd_iter(R - b, n);
+    if (gcd != 1 && gcd != n)
+    {
+      factors.push_back(gcd);
+      //break;
+    }
   }
 
   return factors;
