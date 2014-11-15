@@ -53,7 +53,7 @@ class gf2
       }
     }
 
-    std::vector<std::set<unsigned int>> fast_gauss()
+    std::vector<std::vector<unsigned int>> fast_gauss()
     {
       auto dependencies = std::vector<unsigned int>(cols, ~0);
       auto marks = std::set<unsigned int>();
@@ -86,7 +86,7 @@ class gf2
           break;
         }
       }
-      auto result = std::vector<std::set<unsigned int>>();
+      auto result = std::vector<std::vector<unsigned int>>();
 
       for (unsigned int row = 0; row < rows; row++)
       {
@@ -95,13 +95,13 @@ class gf2
           continue;
         }
 
-        auto res = std::set<unsigned int>();
-        res.insert(row);
+        auto res = std::vector<unsigned int>();
+        res.push_back(row);
         for (unsigned int col = 0; col < cols; col++)
         {
           if (get_bit(row, col))
           {
-            res.insert(dependencies[col]);
+            res.push_back(dependencies[col]);
           }
         }
 
