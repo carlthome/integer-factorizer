@@ -2,7 +2,7 @@
 using namespace std;
 
 template <class Num>
-inline Num powm(Num a, Num b, Num m)
+inline Num powm(Num a, Num b, const Num& m)
 {
   Num result = 1;
   while (b > 0)
@@ -22,7 +22,7 @@ inline Num powm(Num a, Num b, Num m)
 
 // TODO: remove this once the other stuff works
 template <>
-inline mpz_class powm(const mpz_class& a, const mpz_class& b, const mpz_class& m)
+inline mpz_class powm(mpz_class a, mpz_class b, const mpz_class& m)
 {
 	mpz_class result;
 	mpz_powm(result.get_mpz_t(), a.get_mpz_t(), b.get_mpz_t(), m.get_mpz_t());
