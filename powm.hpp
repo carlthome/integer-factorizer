@@ -1,15 +1,13 @@
 #pragma once
-#include <vector>
-#include <climits>
 using namespace std;
 
-inline unsigned int powm(unsigned int a, unsigned int b, unsigned int m)
+template <class Num>
+inline Num powm(Num a, Num b, Num m)
 {
-  unsigned int result = 1;
+  Num result = 1;
   while (b > 0)
   {
-  	// fast way to check b mod 2 == 1
-  	if (b & 1)
+  	if (b % 2 == 1)
   	{
   		result = result * a % m;
   	}
@@ -20,4 +18,13 @@ inline unsigned int powm(unsigned int a, unsigned int b, unsigned int m)
   }
 
   return result;
+}
+
+// TODO: remove this once the other stuff works
+template <>
+inline mpz_class powm(const mpz_class& a, const mpz_class& b, const mpz_class& m)
+{
+	mpz_class result;
+	mpz_powm(result.get_mpz_t(), a.get_mpz_t(), b.get_mpz_t(), m.get_mpz_t());
+	return result;
 }
