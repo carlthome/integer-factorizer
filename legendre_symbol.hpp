@@ -9,7 +9,7 @@ inline int legendre_symbol(const Num& a, const Num& p)
 
   if (t > 1)
   {
-  	return -1;
+    return -1;
   }
   return t;
 }
@@ -18,5 +18,5 @@ inline int legendre_symbol(const Num& a, const Num& p)
 template <>
 inline int legendre_symbol(const mpz_class& a, const mpz_class& p)
 {
-	return mpz_legendre(a.get_mpz_t(), p.get_mpz_t());
+  return mpz_legendre(a.get_mpz_t(), p.get_mpz_t());
 }

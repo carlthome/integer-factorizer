@@ -7,14 +7,14 @@ inline Num powm(Num a, Num b, const Num& m)
   Num result = 1;
   while (b > 0)
   {
-  	if (b % 2 == 1)
-  	{
-  		result = result * a % m;
-  	}
-  	// divide by two
-  	b >>= 1;
+    if (b % 2 == 1)
+    {
+      result = result * a % m;
+    }
+    // divide by two
+    b >>= 1;
 
-  	a = a * a % m;
+    a = a * a % m;
   }
 
   return result;
@@ -24,7 +24,7 @@ inline Num powm(Num a, Num b, const Num& m)
 template <>
 inline mpz_class powm(mpz_class a, mpz_class b, const mpz_class& m)
 {
-	mpz_class result;
-	mpz_powm(result.get_mpz_t(), a.get_mpz_t(), b.get_mpz_t(), m.get_mpz_t());
-	return result;
+  mpz_class result;
+  mpz_powm(result.get_mpz_t(), a.get_mpz_t(), b.get_mpz_t(), m.get_mpz_t());
+  return result;
 }
