@@ -51,7 +51,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
   for (unsigned int i = 0; i < primes.size(); i++)
   {
     mpz_class p = primes[i];
-    if (mpz_legendre(n.get_mpz_t(), mpz_class(p).get_mpz_t()) == 1)
+    if (mpz_legendre(n.get_mpz_t(), p.get_mpz_t()) == 1)
     {
       factor_base.push_back(p);
     }
