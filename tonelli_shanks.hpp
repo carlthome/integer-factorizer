@@ -3,6 +3,7 @@
 #include "legendre_symbol.hpp"
 using namespace std;
 
+// solves the congruence x^2 = n (mod p)
 inline pair<unsigned int, unsigned int> tonelli_shanks(unsigned int n, unsigned int p)
 {
   if (p == 2)
