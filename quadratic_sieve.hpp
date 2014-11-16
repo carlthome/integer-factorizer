@@ -5,12 +5,13 @@
 #include "utils.hpp"
 #include "tonelli_shanks.hpp"
 #include "gf2.hpp"
+#include "trial_division.hpp"
 #include <iostream>
 using namespace std;
 
 namespace
 {
-  const unsigned int CHUNK_SIZE = 65536;
+  const unsigned int CHUNK_SIZE = 655360;
 
   unsigned int optimal_B(const mpz_class& n)
   {
@@ -37,13 +38,14 @@ namespace
   }
 }
 
-inline vector<mpz_class> quadratic_sieve(const mpz_class& n)
+inline vector<mpz_class> quadratic_sieve(const mpz_class& n_)
 {
-  auto factors = vector<mpz_class>();
-  mpz_class a, tmp;
-  mpz_sqrt(a.get_mpz_t(), n.get_mpz_t());
-  // round up instead of down
-  a++;
+  auto n = n_;
+  auto factors = sieve_of_eratosthenes_factorization(n);
+  n = factors.back();
+  factors.pop_back();
+  cout << "n is now " << n << endl;
+
   // ~magic number~, needs to be different for different n
   auto B = optimal_B(n);
   // sieving range
