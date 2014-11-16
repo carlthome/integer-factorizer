@@ -3,51 +3,70 @@
 #include "legendre_symbol.hpp"
 using namespace std;
 
-// solves the congruence x^2 = n (mod p)
-inline pair<unsigned int, unsigned int> tonelli_shanks(unsigned int n_, unsigned int p_)
+namespace
 {
-  if (p_ == 2)
+  inline mpz_class pow_mpz(unsigned long int base, unsigned long int e)
   {
-    return {n_, n_};
+    mpz_class ret;
+    mpz_ui_pow_ui(ret.get_mpz_t(), base, e);
+    return ret;
   }
-  unsigned long int p = p_;
-  unsigned long int n = n_;
+}
 
-  unsigned long int S = 0;
-  unsigned long int Q = p - 1;
-
-  while (Q % 2 == 0)
+// solves the congruence x^2 = n (mod p)
+inline pair<unsigned long int, unsigned long int> tonelli_shanks(unsigned long int a, unsigned long int p)
+{
+  if (p == 2)
   {
-    Q /= 2;
-    S++;
+    return {a, a};
   }
-
-  unsigned long int z = 2;
-
-  while (legendre_symbol(z, p) != -1)
+  if (p % 4 == 3)
   {
-    z++;
+    auto x = powm(a, (p + 1) / 4, p);
+    return {x, a - x};
   }
 
-  unsigned long int c = powm(z, Q, p);
-  unsigned long int R = powm(n, (Q + 1) / 2, p);
-  unsigned long int t = powm(n, Q, p);
-  unsigned long int M = S;
-
-  while (t % p != 1)
+  unsigned long int s = p - 1;
+  unsigned long int e = 0;
+  while (s % 2 == 0)
   {
-    unsigned long int i = 1;
-    while (powm<unsigned long int>(t, pow(2, i), p) != 1)
+    s /= 2;
+    e+= 1;
+  }
+
+  unsigned long int n = 2;
+  while (legendre_symbol(n, p) != -1)
+  {
+    n++;
+  }
+
+  unsigned long int x = powm(a, (s + 1) / 2, p);
+  unsigned long int b = powm(a, s, p);
+  unsigned long int g = powm(n, s, p);
+  unsigned long int r = e;
+
+  while (true)
+  {
+    unsigned long int t = b;
+    unsigned long int m = 0;
+    for (m = 0; m < r; m++)
     {
-      i++;
+      if (t == 1)
+      {
+        break;
+      }
+      t = powm<unsigned long int>(t, 2, p);
     }
 
-    unsigned long int b = powm<unsigned long int>(c, pow(2, M - i - 1), p);
-    R = R * b % p;
-    t = t * b * b % p;
-    c = b * b % p;
-    M = i;
-  }
+    if (m == 0)
+    {
+      return {x, a - x};
+    }
 
-  return {R, p - R};
+    unsigned long int gs = powm<unsigned long int>(g, pow(2, r - m - 1), p);
+    g = (gs * gs) % p;
+    x = (x * gs) % p;
+    b = (b * g) % p;
+    r = m;
+  }
 }
