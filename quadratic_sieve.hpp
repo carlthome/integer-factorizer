@@ -44,6 +44,7 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n_)
   auto factors = sieve_of_eratosthenes_factorization(n);
   n = factors.back();
   factors.pop_back();
+  unsigned int factorized_i = factors.size();
   cout << "n is now " << n << endl;
 
   // ~magic number~, needs to be different for different n
@@ -205,6 +206,15 @@ inline vector<mpz_class> quadratic_sieve(const mpz_class& n_)
       factors.push_back(gcd);
       //break;
     }
+  }
+
+  for (; factorized_i < factors.size(); factorized_i++)
+  {
+    n /= factors[factorized_i];
+  }
+  if (n != 1)
+  {
+    factors.push_back(n);
   }
 
   return factors;
