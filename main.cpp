@@ -18,11 +18,11 @@ using namespace std;
 
 typedef function<vector<mpz_class>(mpz_class)> factorization_algorithm;
 map<string, factorization_algorithm> factorization_algorithms = {
-  //{ "Trial Division", trial_division },
-  //{ "Sieve of Eratosthenes", sieve_of_eratosthenes_factorization },
-  //{ "Fermat Factorization", fermat_factorization },
+  { "Trial Division", trial_division },
+  { "Sieve of Eratosthenes", sieve_of_eratosthenes_factorization },
+  { "Fermat Factorization", fermat_factorization },
   { "Pollard Rho", pollard_rho },
-  //{ "Quadratic Sieve", quadratic_sieve },
+  { "Quadratic Sieve", quadratic_sieve },
 };
 
 int main(int argc, char* argv[])
