@@ -1,45 +1,52 @@
-#pragma once
-#include <vector>
-#include "utils.hpp"
-using namespace std;
+#include "miller_rabin.hpp"
 
-inline vector<mpz_class> pollard_rho(const mpz_class& n)
+void go(const mpz_class& n, vector<mpz_class>& factors)
+{
+  if (n == one) return;
+  if (miller_rabin_prime(n, 64))
+  {
+    factors.push_back(n);
+  }
+  else
+  {
+    static auto g = [=] (const mpz_class& x) -> mpz_class
+    {
+      return (x * x + 1) % n;
+    };
+
+    auto x = two;
+    auto h = one;
+    auto x_fixed = two;
+    auto cycle_size = two;
+    while (h == one)
+    {
+      auto count = one;
+
+      while (count <= cycle_size && h == one)
+      {
+        x = g(x);
+        count += 1;
+        h = gcd_iter(x - x_fixed, n);
+      }
+
+      if (h != one)
+      {
+        break;
+      }
+
+      cycle_size *= 2;
+      x_fixed = x;
+    }
+
+    go(h, factors);
+    go(n / h, factors);
+  }
+}
+
+// Repeatedly apply Pollard's Rho algorithm to factor the input number n.
+vector<mpz_class> pollard_rho(const mpz_class& n)
 {
   vector<mpz_class> factors;
-
-  auto g = [=] (const mpz_class& x) -> mpz_class { return (x * x + 1) % n; };
-  
-  auto one = mpz_class(1);
-  auto two = mpz_class(2);
-  auto x_fixed = two;
-  auto cycle_size = two;
-  auto x = two;
-  auto h = one;
-
-  while (h == one)
-  {
-    auto count = one;
-
-    while (count <= cycle_size && h == one)
-    {
-      x = g(x);
-      count += 1;
-      h = gcd_iter(x - x_fixed, n);
-    }
-
-    if (h != one)
-    {
-      break;
-    }
-
-    cycle_size *= 2;
-    x_fixed = x;
-  }
-
-  factors.push_back(h);
-  if (n != h)
-  {
-    factors.push_back(n / h);
-  }
+  go(n, factors);
   return factors;
 }
