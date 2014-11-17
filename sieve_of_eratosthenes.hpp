@@ -1,8 +1,3 @@
-#pragma once
-#include <vector>
-#include <climits>
-using namespace std;
-
 inline vector<mpz_class> sieve_of_eratosthenes_factorization(const mpz_class& n)
 {
   mpz_class remaining = n;

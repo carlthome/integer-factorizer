@@ -1,8 +1,3 @@
-#pragma once
-#include <vector>
-#include <cmath>
-using namespace std;
-
 namespace
 {
   // random int from min to max inclusive
@@ -17,7 +12,7 @@ namespace
 // return true if it PROBABLY is prime
 inline bool miller_rabin_prime(const mpz_class & n, unsigned int k)
 {
-  if (n <= mpz_class(3))
+  if (n <= three)
   {
     return true;
   }
@@ -28,8 +23,6 @@ inline bool miller_rabin_prime(const mpz_class & n, unsigned int k)
 
   mpz_class m, d;
   d = m = n - 1;
-  mpz_class zero = mpz_class(0);
-  mpz_class one = mpz_class(1);
   unsigned int s = 0;
 
   while (mpz_even_p(d.get_mpz_t()))

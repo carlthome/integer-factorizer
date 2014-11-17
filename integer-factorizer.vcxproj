@@ -70,8 +70,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="fermat_factorization.hpp" />
+    <ClInclude Include="gf2.hpp" />
+    <ClInclude Include="legendre_symbol.hpp" />
+    <ClInclude Include="miller_rabin.hpp" />
     <ClInclude Include="pollard_rho.hpp" />
+    <ClInclude Include="powm.hpp" />
+    <ClInclude Include="quadratic_sieve.hpp" />
     <ClInclude Include="sieve_of_eratosthenes.hpp" />
+    <ClInclude Include="tonelli_shanks.hpp" />
     <ClInclude Include="trial_division.hpp" />
     <ClInclude Include="utils.hpp" />
   </ItemGroup>

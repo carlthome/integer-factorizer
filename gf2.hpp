@@ -1,7 +1,4 @@
-#pragma once
-#include <vector>
-#include <set>
-#include <string>
+typedef unsigned long ulong;
 
 namespace
 {

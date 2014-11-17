@@ -1,13 +1,5 @@
-#pragma once
-#include <vector>
-#include <utility>
-#include <algorithm>
-#include "utils.hpp"
 #include "tonelli_shanks.hpp"
 #include "gf2.hpp"
-#include "trial_division.hpp"
-#include <iostream>
-using namespace std;
 
 namespace
 {

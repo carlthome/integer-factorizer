@@ -1,6 +1,3 @@
-#pragma once
-using namespace std;
-
 template <class Num>
 inline Num powm(Num a, Num b, const Num& m)
 {

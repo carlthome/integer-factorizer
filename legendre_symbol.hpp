@@ -1,6 +1,4 @@
-#pragma once
 #include "powm.hpp"
-using namespace std;
 
 template <class Num>
 inline int legendre_symbol(const Num& a, const Num& p)

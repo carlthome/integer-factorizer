@@ -1,7 +1,4 @@
-#pragma once
-#include <utility>
 #include "legendre_symbol.hpp"
-using namespace std;
 
 namespace
 {
