@@ -15,6 +15,7 @@ const ll TRIAL_BOUND = 100000000;
 vector<ll> primes;
 
 // Fast modular exponentiation.
+//TODO Use arbitrary precision instead.
 inline ll pow_mod(ll a, ll b, ll m)
 {
   auto r = 1;
@@ -29,6 +30,7 @@ inline ll pow_mod(ll a, ll b, ll m)
   return r;
 }
 
+//TODO Use arbitrary precision instead.
 inline ll legendre_symbol(ll a, ll p)
 {
   auto t = pow_mod(a, (p - 1) / 2, p);
@@ -36,7 +38,8 @@ inline ll legendre_symbol(ll a, ll p)
 }
 
 // Solve the congruence x^2 = n (mod p).
-inline void tonelli_shanks(ll n, ll p, ll *result)
+//TODO Use arbitrary precision instead.
+inline void tonelli_shanks(ll n, ll p, size_t *result)
 {
   if (p == 2)
   {
@@ -115,7 +118,7 @@ inline num quadratic_sieve(num& n)
   // Set smoothness bound with Torbjörn Granlund's magic formula.
   const float log_n = mpz_sizeinbase(n.get_mpz_t(), 2) * log(2);
   const ll B = ceil(100 + 3 * exp(0.5 * sqrt(log_n * log(log_n))));
-  cerr << "    Set smoothness bound to " << B << "." << endl;
+  cerr << "    Smoothness bound: " << B << endl;
 
   // Generate the factor base.
   vector<ll> factor_base;
@@ -125,17 +128,18 @@ inline num quadratic_sieve(num& n)
     if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
       factor_base.push_back(prime);
   }
-  cerr << "    Generated factor base of size " << factor_base.size() << "." << endl;
+
+  cerr << "    Factor base: " << factor_base.size() << endl;
 
   // Calculate sieve index (where to start the sieve) for each factor base number.
-  ll **fb_indexes = new ll*[2];
-  fb_indexes[0] = new ll[factor_base.size()];
-  fb_indexes[1] = new ll[factor_base.size()];
+  size_t **fb_indexes = new size_t*[2];
+  fb_indexes[0] = new size_t[factor_base.size()];
+  fb_indexes[1] = new size_t[factor_base.size()];
   for (auto p = 0; p < factor_base.size(); ++p)
   {
     // At what indexes do we start this sieve? Solve the congruence x^2 = n (mod p) to find out.
     // Results in two solutions, so we do two sieve iterations for each prime in the factor base.
-    ll idxs[2];
+    size_t idxs[2];
     num temp = n % num(factor_base[p]);
     tonelli_shanks(temp.get_ui(), factor_base[p], idxs);
 
@@ -155,7 +159,7 @@ inline num quadratic_sieve(num& n)
   ll next_estimate = 1;
   ll min_x = 0, max_x = SIEVE_WINDOW;
   vector<ll> X;
-  vector<float> Y(SIEVE_WINDOW, 0);
+  vector<double> Y(SIEVE_WINDOW, 0);
   vector<vector<ll>> smooth;
   while (smooth.size() < factor_base.size() + 20)
   {
@@ -164,7 +168,7 @@ inline num quadratic_sieve(num& n)
     {
       auto x = i + min_x;
 
-      // Only calculate log estimates if neccessary.
+      // Only calculate log estimates if necessary.
       if (next_estimate <= x)
       {
         auto y = Q(x, n);
@@ -190,12 +194,12 @@ inline num quadratic_sieve(num& n)
     }
 
     // Factor all values whose logarithms were reduced to approximately zero using trial division.
-    float threshold = log(factor_base.back()) / log(2);
+    const auto threshold = log(factor_base.back()) / log(2);
     for (auto i = 0; i < SIEVE_WINDOW; ++i)
     {
       auto x = i + min_x;
 
-      if (fabs(Y[i]) < threshold)
+      if (abs(Y[i]) < threshold)
       {
         auto y = Q(x, n);
         smooth.push_back(vector<ll>());
@@ -217,9 +221,9 @@ inline num quadratic_sieve(num& n)
 
     min_x += SIEVE_WINDOW;
     max_x += SIEVE_WINDOW;
-    cerr << "      Sieved (smooth numbers found = " << smooth.size() << " out of " << factor_base.size() + 20 << "." << endl;
+    cerr << "      Smooth numbers found = " << smooth.size() << " out of " << factor_base.size() + 20 << "" << endl;
   }
-  cerr << "    Sieving completed." << endl;
+  cerr << "    Sieving completed" << endl;
 
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
   auto **matrix = new ll*[factor_base.size()];
@@ -232,7 +236,7 @@ inline num quadratic_sieve(num& n)
   for (auto s = 0; s < smooth.size(); ++s)
     for (auto p = 0; p < smooth[s].size(); ++p)
       toggle_bit(s, matrix[smooth[s][p]]);
-  cerr << "    Created matrix." << endl;
+  cerr << "    Created matrix" << endl;
 
   // Gauss elimination.
   ll i = 0, j = 0;
@@ -265,7 +269,7 @@ inline num quadratic_sieve(num& n)
     }
     ++j;
   }
-  cerr << "    Performed Gauss elimination." << endl;
+  cerr << "    Performed Gauss elimination" << endl;
 
   // A copy of matrix that we'll perform back-substitution on.
   num a, b;
@@ -391,7 +395,7 @@ factorize:
         {
           if (mpz_divisible_p(factor.get_mpz_t(), num(prime).get_mpz_t()))
           {
-            cerr << "  Trial dividing prime " << prime << "." << endl;
+            cerr << "  Trial division found prime " << prime << "." << endl;
             factors.push(prime);
             factors.push(factor / prime);
             goto factorize;
@@ -411,7 +415,7 @@ factorize:
         }
         else
         {
-          cerr << "  Using quadratic sieve." << endl;
+          cerr << "  Using quadratic sieve:" << endl;
           num f = quadratic_sieve(factor);
           factors.push(f);
           factors.push(factor / f);
