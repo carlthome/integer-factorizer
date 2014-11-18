@@ -1,4 +1,3 @@
-using namespace std;
 #include <iostream>
 #include <mpirxx.h>
 #include <cstdlib>
@@ -6,48 +5,48 @@ using namespace std;
 #include <vector>
 #include <set>
 #include <stack>
+#include <utility>
+#include <functional>
 #include <cassert>
+using namespace std;
 typedef long long ll;
 typedef mpz_class num;
-
+typedef function<num(num, num)> polynomial;
 const ll SIEVE_WINDOW = 100000;
 const ll TRIAL_BOUND = 100000000;
 vector<ll> primes;
 
-// Fast modular exponentiation.
-//TODO Use arbitrary precision instead.
-inline ll pow_mod(ll a, ll b, ll m)
+inline num square(const num& n)
 {
-  auto r = 1;
-  while (b > 0)
-  {
-    if (b & 1)
-      r = r * a % m;
-    b >>= 1;
-    a = a * a % m;
-  }
+  return n * n;
+}
 
+inline double log(const num& n)
+{
+  //TODO * log(2)
+  return mpz_sizeinbase(n.get_mpz_t(), 2); // Number of bits is approximately log_2.
+}
+
+inline num pow_mod(const num& base, const num& exponent, const num& modulo)
+{
+  num r;
+  mpz_powm(r.get_mpz_t(), base.get_mpz_t(), exponent.get_mpz_t(), modulo.get_mpz_t());
   return r;
 }
 
-//TODO Use arbitrary precision instead.
-inline ll legendre_symbol(ll a, ll p)
+inline num legendre_symbol(const num& a, const num& p)
 {
-  auto t = pow_mod(a, (p - 1) / 2, p);
-  return t > 1 ? -1 : t;
+  num exp = (p - 1) / 2;
+  num r = pow_mod(a, exp, p);
+  return (r > 1) ? num(-1) : r;
 }
 
 // Solve the congruence x^2 = n (mod p).
-//TODO Use arbitrary precision instead.
-inline void tonelli_shanks(ll n, ll p, size_t *result)
+inline pair<num, num> tonelli_shanks(const num& n, const num& p)
 {
-  if (p == 2)
-  {
-    result[0] = result[1] = n;
-    return;
-  }
+  if (p == 2) return{n, n};
 
-  ll S = 0, Q = p - 1;
+  num S = 0, Q = p - 1;
 
   while (Q % 2 == 0)
   {
@@ -55,101 +54,81 @@ inline void tonelli_shanks(ll n, ll p, size_t *result)
     ++S;
   }
 
-  ll z = 2;
+  num z = 2;
 
-  while (legendre_symbol(z, p) != -1)
-    ++z;
+  while (legendre_symbol(z, p) != -1) ++z;
 
-  ll c = pow_mod(z, Q, p);
-  ll R = pow_mod(n, (Q + 1) / 2, p);
-  ll t = pow_mod(n, Q, p);
-  ll M = S;
+  num c = pow_mod(z, Q, p);
+  num R = pow_mod(n, (Q + 1) / 2, p);
+  num t = pow_mod(n, Q, p);
+  num M = S;
 
   while (t % p != 1)
   {
-    ll i = 1;
-    while (pow_mod(t, pow(2, i), p) != 1)
-      ++i;
-
-    ll b = pow_mod(c, pow(2, M - i - 1), p);
+    num i = 1;
+    while (pow_mod(t, num(pow(2, i.get_ui())), p) != 1) ++i; //TODO Can i become too large?
+    num exp = M - i - 1;
+    num b = pow_mod(c, num(pow(2, exp.get_ui())), p);
     R = R * b % p;
     t = t * b * b % p;
     c = b * b % p;
     M = i;
   }
 
-  result[0] = R;
-  result[1] = p - R;
+  return{R, p - R};
 }
 
-// Get the i'th bit in row.
+// Get the i:th bit in row.
 inline ll get_bit(ll i, ll *row)
 {
   return (row[i / sizeof(ll)] & (1 << (i % sizeof(ll)))) != 0;
 }
 
-// Set the i'th bit in row to 1.
+// Set the i:th bit in row.
 inline void set_bit(ll i, ll *row)
 {
   row[i / sizeof(ll)] |= (1 << (i % sizeof(ll)));
 }
 
-// Set the i'th bit in row to 0.
+// Unset the i:th bit in row.
 inline void unset_bit(ll i, ll *row)
 {
   row[i / sizeof(ll)] &= ~(1 << (i % sizeof(ll)));
 }
 
-// Toggle the i'th bit in row.
+// Flip the i'th bit in row.
 inline void toggle_bit(ll i, ll *row)
 {
   row[i / sizeof(ll)] ^= (1 << (i % sizeof(ll)));
 }
 
 // A quadratic sieve implementation for integers up to 100 bits. n must be composite.
-inline num quadratic_sieve(num& n)
+inline num quadratic_sieve(const num& n)
 {
-  // Polynomial
-  auto Q = [] (const num& x, const num& n) -> num
-  {
-    return (sqrt(n) + x) * (sqrt(n) + x) - n;
-  };
-
   // Set smoothness bound with Torbjörn Granlund's magic formula.
-  const float log_n = mpz_sizeinbase(n.get_mpz_t(), 2) * log(2);
-  const ll B = ceil(100 + 3 * exp(0.5 * sqrt(log_n * log(log_n))));
+  const num B = ceil(3 * exp(0.5 * sqrt(log(n) * log(log(n)))));
   cerr << "    Smoothness bound: " << B << endl;
 
   // Generate the factor base.
-  vector<ll> factor_base;
+  vector<num> factor_base;
   for (const auto& prime : primes)
   {
     if (prime >= B) break;
     if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
-      factor_base.push_back(prime);
+      factor_base.push_back(num(prime));
   }
 
   cerr << "    Factor base: " << factor_base.size() << endl;
 
   // Calculate sieve index (where to start the sieve) for each factor base number.
-  size_t **fb_indexes = new size_t*[2];
-  fb_indexes[0] = new size_t[factor_base.size()];
-  fb_indexes[1] = new size_t[factor_base.size()];
+  vector<pair<size_t, size_t>> indexes(0);
   for (auto p = 0; p < factor_base.size(); ++p)
   {
-    // At what indexes do we start this sieve? Solve the congruence x^2 = n (mod p) to find out.
-    // Results in two solutions, so we do two sieve iterations for each prime in the factor base.
-    size_t idxs[2];
-    num temp = n % num(factor_base[p]);
-    tonelli_shanks(temp.get_ui(), factor_base[p], idxs);
-
-    temp = idxs[0] - sqrt(n);
-    temp = ((temp % factor_base[p]) + factor_base[p]) % factor_base[p];
-    fb_indexes[0][p] = temp.get_ui();
-
-    temp = idxs[1] - sqrt(n);
-    temp = ((temp % factor_base[p]) + factor_base[p]) % factor_base[p];
-    fb_indexes[1][p] = temp.get_ui();
+    // Solve the congruence x^2 = n (mod p) to find out where to start sieving.
+    auto r = tonelli_shanks(n % factor_base[p], factor_base[p]);
+    num idx1 = (((r.first - sqrt(n)) % factor_base[p]) + factor_base[p]) % factor_base[p];
+    num idx2 = (((r.second - sqrt(n)) % factor_base[p]) + factor_base[p]) % factor_base[p];
+    indexes.push_back({idx1.get_ui(), idx2.get_ui()});
   }
   cerr << "    Determined sieve indices per factor base number." << endl;
 
@@ -157,65 +136,78 @@ inline num quadratic_sieve(num& n)
   cerr << "    Sieving:" << endl;
   float last_estimate = 0;
   ll next_estimate = 1;
-  ll min_x = 0, max_x = SIEVE_WINDOW;
+  size_t min_x = 0, max_x = SIEVE_WINDOW;
   vector<ll> X;
   vector<double> Y(SIEVE_WINDOW, 0);
-  vector<vector<ll>> smooth;
+  vector<vector<ll>> smooth; //TODO Replace with parity bits directly.
   while (smooth.size() < factor_base.size() + 20)
   {
-    // Calculate Y vector of log approximations.
-    for (auto i = 1; i < SIEVE_WINDOW; ++i)
+    static vector<polynomial> polynomials = {
+      [](const num& n, const num& x) -> num { return square((sqrt(1 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(2 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(3 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(4 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(5 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(6 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(7 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(8 * n) + x)) - n; },
+      [](const num& n, const num& x) -> num { return square((sqrt(9 * n) + x)) - n; },
+    };
+    for (const auto& Q : polynomials)
     {
-      auto x = i + min_x;
-
-      // Only calculate log estimates if necessary.
-      if (next_estimate <= x)
+      // Calculate Y vector of log approximations.
+      for (auto i = 1; i < SIEVE_WINDOW; ++i)
       {
-        auto y = Q(x, n);
-        last_estimate = mpz_sizeinbase(y.get_mpz_t(), 2); // Number of bits is approximately log_2.
-        next_estimate *= 1.8 + 1; //TODO Document properly. The higher t gets, the less the logarithm of Y[t] changes.
-      }
+        auto x = i + min_x;
 
-      Y[i] = last_estimate;
-    }
-
-    // Sieve
-    for (auto p = 0; p < factor_base.size(); ++p)
-    {
-      for (auto t = 0; t < 2; ++t)
-      {
-        while (fb_indexes[t][p] < max_x)
+        // Only calculate log estimates if necessary.
+        if (next_estimate <= x)
         {
-          Y[fb_indexes[t][p] - min_x] -= log(factor_base[p]) / log(2);
-          fb_indexes[t][p] += factor_base[p];
+          auto y = Q(n, x);
+          last_estimate = log(y);
+          next_estimate *= 1.8 + 1; //TODO Document properly. The higher t gets, the less the logarithm of Y[t] changes.
         }
-        if (factor_base[p] == 2) break; // p = 2 only has one modular root
+
+        Y[i] = last_estimate;
       }
-    }
 
-    // Factor all values whose logarithms were reduced to approximately zero using trial division.
-    const auto threshold = log(factor_base.back()) / log(2);
-    for (auto i = 0; i < SIEVE_WINDOW; ++i)
-    {
-      auto x = i + min_x;
-
-      if (abs(Y[i]) < threshold)
+      // Sieve
+      for (auto p = 0; p < factor_base.size(); ++p)
       {
-        auto y = Q(x, n);
-        smooth.push_back(vector<ll>());
+        auto& idx1 = indexes[p].first;
+        auto& idx2 = indexes[p].second;
+        const auto val = log(factor_base[p].get_ui()) / log(2);
+        while (idx1 < max_x) Y[idx1 - min_x] -= val, idx1 += factor_base[p].get_ui();
+        while (idx2 < max_x) Y[idx2 - min_x] -= val, idx2 += factor_base[p].get_ui();
+        //TODO if (factor_base[p] == 2) break; // p has only one modular root
+      }
 
-        for (auto p = 0; p < factor_base.size(); ++p)
+      // Factor all values whose logarithms were reduced to approximately zero using trial division.
+      for (auto i = 0; i < SIEVE_WINDOW; ++i)
+      {
+        auto x = i + min_x;
+        if (abs(Y[i]) < 0.1*log(n)) //TODO Set proper tolerance.
         {
-          while (mpz_divisible_ui_p(y.get_mpz_t(), factor_base[p]))
+          //TODO Avoid duplicates from other polynomials.
+          auto y = Q(n, x);
+
+          vector<ll> factorization;
+          for (auto p = 0; p < factor_base.size(); ++p)
           {
-            mpz_divexact_ui(y.get_mpz_t(), y.get_mpz_t(), factor_base[p]);
-            smooth.back().push_back(p);
+            while (y % factor_base[p] == 0)
+            {
+              y /= factor_base[p];
+              factorization.push_back(p);
+            }
+          }
+
+          // Keep factorization if smooth.
+          if (y == 1)
+          {
+            X.push_back(i + min_x);
+            smooth.push_back(factorization);
           }
         }
-
-        // Keep smooth number.
-        if (y == 1) X.push_back(i + min_x);
-        else smooth.pop_back(); // Not smooth. Remove!
       }
     }
 
