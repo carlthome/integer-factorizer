@@ -10,7 +10,7 @@ using namespace std;
 typedef long long ll;
 typedef mpz_class num;
 
-const ll SIEVE_WINDOW = 10000000;
+const ll SIEVE_WINDOW = 100000;
 const ll TRIAL_BOUND = 100000000;
 vector<ll> primes;
 
@@ -114,8 +114,8 @@ inline num quadratic_sieve(num& n)
 
   // Set smoothness bound with Torbjörn Granlund's magic formula.
   const float log_n = mpz_sizeinbase(n.get_mpz_t(), 2) * log(2);
-  const ll B = ceil(exp(0.5 * sqrt(log_n * log(log_n))));
-  cerr << "Set smoothness bound to " << B << "." << endl;
+  const ll B = ceil(100 + 3 * exp(0.5 * sqrt(log_n * log(log_n))));
+  cerr << "    Set smoothness bound to " << B << "." << endl;
 
   // Generate the factor base.
   vector<ll> factor_base;
@@ -125,7 +125,7 @@ inline num quadratic_sieve(num& n)
     if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
       factor_base.push_back(prime);
   }
-  cerr << "Generated factor base of size " << factor_base.size() << "." << endl;
+  cerr << "    Generated factor base of size " << factor_base.size() << "." << endl;
 
   // Calculate sieve index (where to start the sieve) for each factor base number.
   ll **fb_indexes = new ll*[2];
@@ -147,9 +147,10 @@ inline num quadratic_sieve(num& n)
     temp = ((temp % factor_base[p]) + factor_base[p]) % factor_base[p];
     fb_indexes[1][p] = temp.get_ui();
   }
-  cerr << "Determined sieve indices per factor base number." << endl;
+  cerr << "    Determined sieve indices per factor base number." << endl;
 
   // Sieve new chunks until we have enough smooth numbers.
+  cerr << "    Sieving:" << endl;
   float last_estimate = 0;
   ll next_estimate = 1;
   ll min_x = 0, max_x = SIEVE_WINDOW;
@@ -216,8 +217,9 @@ inline num quadratic_sieve(num& n)
 
     min_x += SIEVE_WINDOW;
     max_x += SIEVE_WINDOW;
-    cerr << "Sieved (smooth numbers found = " << smooth.size() << " out of " << factor_base.size() + 20 << "." << endl;
+    cerr << "      Sieved (smooth numbers found = " << smooth.size() << " out of " << factor_base.size() + 20 << "." << endl;
   }
+  cerr << "    Sieving completed." << endl;
 
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
   auto **matrix = new ll*[factor_base.size()];
@@ -230,8 +232,7 @@ inline num quadratic_sieve(num& n)
   for (auto s = 0; s < smooth.size(); ++s)
     for (auto p = 0; p < smooth[s].size(); ++p)
       toggle_bit(s, matrix[smooth[s][p]]);
-  cerr << "Created matrix." << endl;
-
+  cerr << "    Created matrix." << endl;
 
   // Gauss elimination.
   ll i = 0, j = 0;
@@ -264,7 +265,7 @@ inline num quadratic_sieve(num& n)
     }
     ++j;
   }
-  cerr << "Performed Gauss elimination." << endl;
+  cerr << "    Performed Gauss elimination." << endl;
 
   // A copy of matrix that we'll perform back-substitution on.
   num a, b;
@@ -317,7 +318,6 @@ inline num quadratic_sieve(num& n)
 
       if (count == 1) --i;
     }
-    cerr << "Found non-trivial factor." << endl;
 
     // Combine factor base to find square.
     a = 1, b = 1;
@@ -336,14 +336,13 @@ inline num quadratic_sieve(num& n)
       for (auto i = 0; i < (combination[p] / 2); ++i)
         a *= factor_base[p];
     }
-
-
   }
   b -= a;
-  cerr << "Found perfect square." << endl;
 
   num factor;
   mpz_gcd(factor.get_mpz_t(), b.get_mpz_t(), n.get_mpz_t());
+
+  cerr << "  Found factor " << factor << " with quadratic sieve." << endl;
 
   return factor;
 }
@@ -353,11 +352,12 @@ int main()
   // Sieve out some small primes.
   bool *is_prime = new bool[TRIAL_BOUND];
   memset(is_prime, true, TRIAL_BOUND);
-  for (auto p = 2; p < TRIAL_BOUND; ++p)
+  is_prime[0] = is_prime[1] = false;
+  for (int i = 2; i <= sqrt(TRIAL_BOUND + 1); i++)
   {
-    if (!is_prime[p]) continue;
-    primes.push_back(p);
-    for (auto i = p; i < TRIAL_BOUND; i += p) is_prime[i] = 0;
+    if (!is_prime[i]) continue;
+    primes.push_back(i);
+    for (int j = i + i; j <= TRIAL_BOUND; j += i) is_prime[j] = false;
   }
 
   // Factor numbers.
@@ -372,45 +372,50 @@ factorize:
     while (!factors.empty())
     {
       num factor = factors.top(); factors.pop();
+      cerr << endl << "Factoring " << factor << ":" << endl;
 
       // Print probable primes.
       if (mpz_probab_prime_p(factor.get_mpz_t(), 64))
       {
+        cerr << "  Number was prime." << endl;
         cout << factor << endl;
         product *= factor;
         goto factorize;
       }
-
-      //TODO Test Pollard's rho algorithm for a limited time.
-
-      // Trial divide small primes.
-      bool found_factor = false;
-      for (const auto& prime : primes)
-      {
-        if (mpz_divisible_ui_p(factor.get_mpz_t(), prime))
-        {
-          factors.push(prime);
-          factors.push(factor / prime);
-          goto factorize;
-        }
-      }
-
-      // Avoid perfect powers by dividing and continuing per base factor.
-      if (mpz_perfect_power_p(factor.get_mpz_t()))
-      {
-        cerr << "Avoiding perfect powers." << endl;
-        for (auto n = 2; n < sqrt(factor); ++n)
-        {
-          num root, rem;
-          mpz_rootrem(root.get_mpz_t(), rem.get_mpz_t(), factor.get_mpz_t(), n);
-          if (rem == 0) for (auto i = 0; i < n; ++i) factors.push(root);
-        }
-      }
       else
       {
-        num f = quadratic_sieve(factor);
-        factors.push(f);
-        factors.push(factor / f);
+        //TODO Test Pollard's rho algorithm for a limited time.
+
+        // Trial divide small primes.
+        for (const auto& prime : primes)
+        {
+          if (mpz_divisible_p(factor.get_mpz_t(), num(prime).get_mpz_t()))
+          {
+            cerr << "  Trial dividing prime " << prime << "." << endl;
+            factors.push(prime);
+            factors.push(factor / prime);
+            goto factorize;
+          }
+        }
+
+        // Avoid perfect powers by dividing and continuing per base factor.
+        if (mpz_perfect_power_p(factor.get_mpz_t()))
+        {
+          cerr << "  Avoiding perfect powers." << endl;
+          for (auto n = 2; n < sqrt(factor); ++n)
+          {
+            num root, rem;
+            mpz_rootrem(root.get_mpz_t(), rem.get_mpz_t(), factor.get_mpz_t(), n);
+            if (rem == 0) for (auto i = 0; i < n; ++i) factors.push(root);
+          }
+        }
+        else
+        {
+          cerr << "  Using quadratic sieve." << endl;
+          num f = quadratic_sieve(factor);
+          factors.push(f);
+          factors.push(factor / f);
+        }
       }
     }
     assert(number == product);
