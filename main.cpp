@@ -9,37 +9,14 @@
 #include <functional>
 #include <cassert>
 using namespace std;
-typedef long long ll;
 typedef mpz_class num;
 typedef function<num(num, num)> polynomial;
-const ll SIEVE_WINDOW = 100000;
-const ll TRIAL_BOUND = 100000000;
-vector<ll> primes;
+const long SIEVE_WINDOW = 1000000;
+const long TRIAL_BOUND = 1000000000;
+vector<long> primes;
 
-inline num square(const num& n)
-{
-  return n * n;
-}
-
-inline double log(const num& n)
-{
-  //TODO * log(2)
-  return mpz_sizeinbase(n.get_mpz_t(), 2); // Number of bits is approximately log_2.
-}
-
-inline num pow_mod(const num& base, const num& exponent, const num& modulo)
-{
-  num r;
-  mpz_powm(r.get_mpz_t(), base.get_mpz_t(), exponent.get_mpz_t(), modulo.get_mpz_t());
-  return r;
-}
-
-inline num legendre_symbol(const num& a, const num& p)
-{
-  num exp = (p - 1) / 2;
-  num r = pow_mod(a, exp, p);
-  return (r > 1) ? num(-1) : r;
-}
+// Number of bits in a is approximately log_2(a). 
+inline float log(const num& a) { return mpz_sizeinbase(a.get_mpz_t(), 2); }
 
 // Solve the congruence x^2 = n (mod p).
 inline pair<num, num> tonelli_shanks(const num& n, const num& p)
@@ -56,7 +33,14 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
 
   num z = 2;
 
-  while (legendre_symbol(z, p) != -1) ++z;
+  while (mpz_legendre(z.get_mpz_t(), p.get_mpz_t()) != -1) ++z;
+
+  static auto pow_mod = [](const num& base, const num& exponent, const num& modulo)
+  {
+    num r;
+    mpz_powm(r.get_mpz_t(), base.get_mpz_t(), exponent.get_mpz_t(), modulo.get_mpz_t());
+    return r;
+  };
 
   num c = pow_mod(z, Q, p);
   num R = pow_mod(n, (Q + 1) / 2, p);
@@ -78,30 +62,6 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
   return{R, p - R};
 }
 
-// Get the i:th bit in row.
-inline ll get_bit(ll i, ll *row)
-{
-  return (row[i / sizeof(ll)] & (1 << (i % sizeof(ll)))) != 0;
-}
-
-// Set the i:th bit in row.
-inline void set_bit(ll i, ll *row)
-{
-  row[i / sizeof(ll)] |= (1 << (i % sizeof(ll)));
-}
-
-// Unset the i:th bit in row.
-inline void unset_bit(ll i, ll *row)
-{
-  row[i / sizeof(ll)] &= ~(1 << (i % sizeof(ll)));
-}
-
-// Flip the i'th bit in row.
-inline void toggle_bit(ll i, ll *row)
-{
-  row[i / sizeof(ll)] ^= (1 << (i % sizeof(ll)));
-}
-
 // A quadratic sieve implementation for integers up to 100 bits. n must be composite.
 inline num quadratic_sieve(const num& n)
 {
@@ -113,16 +73,17 @@ inline num quadratic_sieve(const num& n)
   vector<num> factor_base;
   for (const auto& prime : primes)
   {
-    if (prime >= B) break;
+    if (B <= prime) break;
     if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
+    {
       factor_base.push_back(num(prime));
+    }
   }
-
   cerr << "    Factor base: " << factor_base.size() << endl;
 
   // Calculate sieve index (where to start the sieve) for each factor base number.
   vector<pair<size_t, size_t>> indexes(0);
-  for (auto p = 0; p < factor_base.size(); ++p)
+  for (unsigned long p = 0; p < factor_base.size(); ++p)
   {
     // Solve the congruence x^2 = n (mod p) to find out where to start sieving.
     auto r = tonelli_shanks(n % factor_base[p], factor_base[p]);
@@ -135,13 +96,14 @@ inline num quadratic_sieve(const num& n)
   // Sieve new chunks until we have enough smooth numbers.
   cerr << "    Sieving:" << endl;
   float last_estimate = 0;
-  ll next_estimate = 1;
+  size_t next_estimate = 1;
   size_t min_x = 0, max_x = SIEVE_WINDOW;
-  vector<ll> X;
-  vector<double> Y(SIEVE_WINDOW, 0);
-  vector<vector<ll>> smooth; //TODO Replace with parity bits directly.
+  vector<size_t> X;
+  vector<float> Y(SIEVE_WINDOW, 0);
+  vector<vector<long>> smooth; //TODO Replace with parity bits directly.
   while (smooth.size() < factor_base.size() + 20)
   {
+    static auto square = [](const num& n) { return n * n; };
     static vector<polynomial> polynomials = {
       [](const num& n, const num& x) -> num { return square((sqrt(1 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(2 * n) + x)) - n; },
@@ -156,7 +118,7 @@ inline num quadratic_sieve(const num& n)
     for (const auto& Q : polynomials)
     {
       // Calculate Y vector of log approximations.
-      for (auto i = 1; i < SIEVE_WINDOW; ++i)
+      for (unsigned long i = 1; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
 
@@ -165,14 +127,14 @@ inline num quadratic_sieve(const num& n)
         {
           auto y = Q(n, x);
           last_estimate = log(y);
-          next_estimate *= 1.8 + 1; //TODO Document properly. The higher t gets, the less the logarithm of Y[t] changes.
+          next_estimate *= 2;
         }
 
         Y[i] = last_estimate;
       }
 
       // Sieve
-      for (auto p = 0; p < factor_base.size(); ++p)
+      for (unsigned long p = 0; p < factor_base.size(); ++p)
       {
         auto& idx1 = indexes[p].first;
         auto& idx2 = indexes[p].second;
@@ -183,7 +145,7 @@ inline num quadratic_sieve(const num& n)
       }
 
       // Factor all values whose logarithms were reduced to approximately zero using trial division.
-      for (auto i = 0; i < SIEVE_WINDOW; ++i)
+      for (unsigned long i = 0; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
         if (abs(Y[i]) < 0.1*log(n)) //TODO Set proper tolerance.
@@ -191,8 +153,8 @@ inline num quadratic_sieve(const num& n)
           //TODO Avoid duplicates from other polynomials.
           auto y = Q(n, x);
 
-          vector<ll> factorization;
-          for (auto p = 0; p < factor_base.size(); ++p)
+          vector<long> factorization;
+          for (unsigned long p = 0; p < factor_base.size(); ++p)
           {
             while (y % factor_base[p] == 0)
             {
@@ -217,27 +179,35 @@ inline num quadratic_sieve(const num& n)
   }
   cerr << "    Sieving completed" << endl;
 
+  //TODO Replace below with fast gauss.
+
+  // Utility functions for linear matrix operations.
+  static auto get_bit = [](long i, long *row) { return (row[i / sizeof(long)] & (1 << (i % sizeof(long)))) != 0; }; // Get the i:th bit in row.
+  static auto set_bit = [](long i, long *row) { row[i / sizeof(long)] |= (1 << (i % sizeof(long))); }; // Set the i:th bit in row.
+  static auto unset_bit = [](long i, long *row) { row[i / sizeof(long)] &= ~(1 << (i % sizeof(long))); }; // Unset the i:th bit in row.
+  static auto toggle_bit = [](long i, long *row) { row[i / sizeof(long)] ^= (1 << (i % sizeof(long))); }; // Flip the i:th bit in row.
+
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
-  auto **matrix = new ll*[factor_base.size()];
-  auto row_words = (smooth.size() + sizeof(ll)) / sizeof(ll);
-  for (auto i = 0; i < factor_base.size(); ++i)
+  auto **matrix = new long*[factor_base.size()];
+  auto row_words = (smooth.size() + sizeof(long)) / sizeof(long);
+  for (unsigned long i = 0; i < factor_base.size(); ++i)
   {
-    matrix[i] = new ll[row_words];
-    memset(matrix[i], 0, row_words * sizeof(ll));
+    matrix[i] = new long[row_words];
+    memset(matrix[i], 0, row_words * sizeof(long));
   }
-  for (auto s = 0; s < smooth.size(); ++s)
-    for (auto p = 0; p < smooth[s].size(); ++p)
+  for (unsigned long s = 0; s < smooth.size(); ++s)
+    for (unsigned long p = 0; p < smooth[s].size(); ++p)
       toggle_bit(s, matrix[smooth[s][p]]);
   cerr << "    Created matrix" << endl;
 
   // Gauss elimination.
-  ll i = 0, j = 0;
+  unsigned long i = 0, j = 0;
   while (i < factor_base.size() && j < (smooth.size() + 1))
   {
-    ll maxi = i;
+    long maxi = i;
 
     // Find pivot element.
-    for (auto k = i + 1; k < factor_base.size(); ++k)
+    for (unsigned long k = i + 1; k < factor_base.size(); ++k)
     {
       if (get_bit(j, matrix[k]) == 1)
       {
@@ -249,11 +219,11 @@ inline num quadratic_sieve(const num& n)
     {
       swap(matrix[i], matrix[maxi]);
 
-      for (auto u = i + 1; u < factor_base.size(); ++u)
+      for (unsigned long u = i + 1; u < factor_base.size(); ++u)
       {
         if (get_bit(j, matrix[u]) == 1)
         {
-          for (auto w = 0; w < row_words; ++w)
+          for (unsigned long w = 0; w < row_words; ++w)
             matrix[u][w] ^= matrix[i][w];
         }
       }
@@ -263,31 +233,26 @@ inline num quadratic_sieve(const num& n)
   }
   cerr << "    Performed Gauss elimination" << endl;
 
-  // A copy of matrix that we'll perform back-substitution on.
-  num a, b;
-  ll **back_matrix = new ll*[factor_base.size()];
-  for (auto i = 0; i < factor_base.size(); ++i)
-    back_matrix[i] = new ll[row_words];
-
-  ll *x = new ll[smooth.size()];
-  ll *combination = new ll[factor_base.size()];
+  // A copy of matrix that we'long perform back-substitution on.
+  long **back_matrix = new long*[factor_base.size()];
+  for (unsigned long i = 0; i < factor_base.size(); ++i) back_matrix[i] = new long[row_words];
+  long *x = new long[smooth.size()];
+  long *combination = new long[factor_base.size()];
 
   // Loop until a != +/- b (mod n) to find a non-trivial factor.
+  num a, b;
   while (a % n == b % n || a % n == (-b) % n + n)
   {
-    // Copy the gauss eliminated matrix.
-    for (auto i = 0; i < factor_base.size(); ++i) memcpy(back_matrix[i], matrix[i], row_words * sizeof(ll));
-
-    // Clear the x vector.
-    memset(x, 0, smooth.size() * sizeof(ll));
+    for (unsigned long i = 0; i < factor_base.size(); ++i) memcpy(back_matrix[i], matrix[i], row_words * sizeof(long));
+    memset(x, 0, smooth.size() * sizeof(long));
 
     // Perform back-substitution.
-    ll i = factor_base.size() - 1;
+    long i = factor_base.size() - 1;
     while (i >= 0)
     {
       // Count non-zero elements in current row.
-      ll count = 0, current = -1;
-      for (auto c = 0; c < smooth.size(); ++c)
+      long count = 0, current = -1;
+      for (unsigned long c = 0; c < smooth.size(); ++c)
       {
         count += get_bit(c, back_matrix[i]);
         current = get_bit(c, back_matrix[i]) ? c : current;
@@ -303,7 +268,7 @@ inline num quadratic_sieve(const num& n)
       // Underdermined, pick x[current] randomly.
       x[current] = count > 1 ? rand() % 2 : get_bit(smooth.size(), back_matrix[i]);
 
-      for (auto u = 0; u <= i; ++u)
+      for (long u = 0; u <= i; ++u)
       {
         if (get_bit(current, back_matrix[u]) == 1)
         {
@@ -317,17 +282,17 @@ inline num quadratic_sieve(const num& n)
 
     // Combine factor base to find square.
     a = 1, b = 1;
-    memset(combination, 0, sizeof(ll) * factor_base.size());
-    for (auto i = 0; i < smooth.size(); ++i)
+    memset(combination, 0, sizeof(long) * factor_base.size());
+    for (unsigned long i = 0; i < smooth.size(); ++i)
     {
       if (x[i] == 1)
       {
-        for (auto p = 0; p < smooth[i].size(); ++p) ++combination[smooth[i][p]];
+        for (unsigned long p = 0; p < smooth[i].size(); ++p) ++combination[smooth[i][p]];
         b *= (X[i] + sqrt(n));
       }
     }
 
-    for (auto p = 0; p < factor_base.size(); ++p)
+    for (unsigned long p = 0; p < factor_base.size(); ++p)
     {
       for (auto i = 0; i < (combination[p] / 2); ++i)
         a *= factor_base[p];
@@ -398,11 +363,11 @@ factorize:
         if (mpz_perfect_power_p(factor.get_mpz_t()))
         {
           cerr << "  Avoiding perfect powers." << endl;
-          for (auto n = 2; n < sqrt(factor); ++n)
+          for (unsigned long n = 2; n < sqrt(factor); ++n)
           {
             num root, rem;
             mpz_rootrem(root.get_mpz_t(), rem.get_mpz_t(), factor.get_mpz_t(), n);
-            if (rem == 0) for (auto i = 0; i < n; ++i) factors.push(root);
+            if (rem == 0) for (unsigned long i = 0; i < n; ++i) factors.push(root);
           }
         }
         else
