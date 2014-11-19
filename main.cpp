@@ -12,7 +12,7 @@ using namespace std;
 typedef mpz_class num;
 typedef function<num(num, num)> polynomial;
 const long SIEVE_WINDOW = 1000000;
-const long TRIAL_BOUND = 1000000000;
+const long TRIAL_BOUND = 100000000;
 vector<num> primes;
 
 // Number of bits in a is approximately log_2(a). 
@@ -35,6 +35,14 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
 
   while (mpz_legendre(z.get_mpz_t(), p.get_mpz_t()) != -1) ++z;
 
+  static auto pow = [](const num& base, const num& exponent)
+  {
+    assert(mpz_fits_ui_p(exponent.get_mpz_t()));
+    num r;
+    mpz_pow_ui(r.get_mpz_t(), base.get_mpz_t(), exponent.get_ui());
+    return r;
+  };
+
   static auto pow_mod = [](const num& base, const num& exponent, const num& modulo)
   {
     num r;
@@ -50,9 +58,8 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
   while (t % p != 1)
   {
     num i = 1;
-    while (pow_mod(t, num(pow(2, i.get_ui())), p) != 1) ++i; //TODO Can i become too large?
-    num exp = M - i - 1;
-    num b = pow_mod(c, num(pow(2, exp.get_ui())), p);
+    while (pow_mod(t, pow(2, i), p) != 1) ++i;
+    num b = pow_mod(c, pow(2, M - i - 1), p);
     R = R * b % p;
     t = t * b * b % p;
     c = b * b % p;
@@ -62,7 +69,7 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
   return{R, p - R};
 }
 
-// A quadratic sieve implementation for integers up to 100 bits. n must be composite.
+// Factorize n.
 inline num quadratic_sieve(const num& n)
 {
   // Set smoothness bound with Torbjörn Granlund's magic formula.
@@ -89,6 +96,8 @@ inline num quadratic_sieve(const num& n)
     auto r = tonelli_shanks(n % factor_base[p], factor_base[p]);
     num idx1 = (((r.first - sqrt(n)) % factor_base[p]) + factor_base[p]) % factor_base[p];
     num idx2 = (((r.second - sqrt(n)) % factor_base[p]) + factor_base[p]) % factor_base[p];
+    assert(mpz_fits_ui_p(idx1.get_mpz_t()));
+    assert(mpz_fits_ui_p(idx2.get_mpz_t()));
     indexes.push_back({idx1.get_ui(), idx2.get_ui()});
   }
   cerr << "    Determined sieve indices per factor base number." << endl;
@@ -134,13 +143,23 @@ inline num quadratic_sieve(const num& n)
       }
 
       // Sieve
-      for (unsigned long p = 0; p < factor_base.size(); ++p)
+      auto i = 0;
+      for (const auto& p : factor_base)
       {
-        auto& idx1 = indexes[p].first;
-        auto& idx2 = indexes[p].second;
-        const auto val = log(factor_base[p].get_ui()) / log(2);
-        while (idx1 < max_x) Y[idx1 - min_x] -= val, idx1 += factor_base[p].get_ui();
-        while (idx2 < max_x) Y[idx2 - min_x] -= val, idx2 += factor_base[p].get_ui();
+        auto& idx1 = indexes[i].first;
+        auto& idx2 = indexes[i].second;
+        auto sieve = [&](size_t& idx)
+        {
+          while (idx < max_x)
+          {
+            Y[idx - min_x] -= log(p);
+            assert(mpz_fits_ui_p(p.get_mpz_t()));
+            idx += p.get_ui();
+          }
+        };
+        sieve(idx1);
+        sieve(idx2);
+        ++i;
       }
 
       // Factor all values whose logarithms were reduced to approximately zero using trial division.
