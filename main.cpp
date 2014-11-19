@@ -8,6 +8,7 @@
 #include <utility>
 #include <functional>
 #include <cassert>
+#include "gf2.hpp"
 using namespace std;
 typedef mpz_class num;
 typedef function<num(num, num)> polynomial;
@@ -199,131 +200,52 @@ inline num quadratic_sieve(const num& n)
 
   //TODO Replace below with fast gauss.
 
-  // Utility functions for linear matrix operations.
-  static auto get_bit = [](long i, long *row) { return (row[i / sizeof(long)] & (1 << (i % sizeof(long)))) != 0; }; // Get the i:th bit in row.
-  static auto set_bit = [](long i, long *row) { row[i / sizeof(long)] |= (1 << (i % sizeof(long))); }; // Set the i:th bit in row.
-  static auto unset_bit = [](long i, long *row) { row[i / sizeof(long)] &= ~(1 << (i % sizeof(long))); }; // Unset the i:th bit in row.
-  static auto toggle_bit = [](long i, long *row) { row[i / sizeof(long)] ^= (1 << (i % sizeof(long))); }; // Flip the i:th bit in row.
-
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
-  auto **matrix = new long*[factor_base.size()];
-  auto row_words = (smooth.size() + sizeof(long)) / sizeof(long);
-  for (unsigned long i = 0; i < factor_base.size(); ++i)
-  {
-    matrix[i] = new long[row_words];
-    memset(matrix[i], 0, row_words * sizeof(long));
-  }
+  auto matrix = gf2(smooth.size(), factor_base.size());
+
   for (unsigned long s = 0; s < smooth.size(); ++s)
     for (unsigned long p = 0; p < smooth[s].size(); ++p)
-      toggle_bit(s, matrix[smooth[s][p]]);
+      matrix.add_bit(s, smooth[s][p]);
   cerr << "    Created matrix" << endl;
 
-  // Gauss elimination.
-  unsigned long i = 0, j = 0;
-  while (i < factor_base.size() && j < (smooth.size() + 1))
-  {
-    long maxi = i;
+  auto dependencies = matrix.fast_gauss();
 
-    // Find pivot element.
-    for (unsigned long k = i + 1; k < factor_base.size(); ++k)
-    {
-      if (get_bit(j, matrix[k]) == 1)
-      {
-        maxi = k;
-        break;
-      }
-    }
-    if (get_bit(j, matrix[maxi]) == 1)
-    {
-      swap(matrix[i], matrix[maxi]);
-
-      for (unsigned long u = i + 1; u < factor_base.size(); ++u)
-      {
-        if (get_bit(j, matrix[u]) == 1)
-        {
-          for (unsigned long w = 0; w < row_words; ++w)
-            matrix[u][w] ^= matrix[i][w];
-        }
-      }
-      ++i;
-    }
-    ++j;
-  }
   cerr << "    Performed Gauss elimination" << endl;
 
-  // A copy of matrix that we'long perform back-substitution on.
-  long **back_matrix = new long*[factor_base.size()];
-  for (unsigned long i = 0; i < factor_base.size(); ++i) back_matrix[i] = new long[row_words];
-  long *x = new long[smooth.size()];
-  long *combination = new long[factor_base.size()];
-
-  // Loop until a != +/- b (mod n) to find a non-trivial factor.
-  num a, b;
-  while (a % n == b % n || a % n == (-b) % n + n)
+  auto factors = set<num>();
+  for (unsigned long d = 0; d < dependencies.size(); d++)
   {
-    for (unsigned long i = 0; i < factor_base.size(); ++i) memcpy(back_matrix[i], matrix[i], row_words * sizeof(long));
-    memset(x, 0, smooth.size() * sizeof(long));
-
-    // Perform back-substitution.
-    long i = factor_base.size() - 1;
-    while (i >= 0)
+    num R = 1;
+    for (unsigned long i = 0; i < dependencies[d].size(); i++)
     {
-      // Count non-zero elements in current row.
-      long count = 0, current = -1;
-      for (unsigned long c = 0; c < smooth.size(); ++c)
-      {
-        count += get_bit(c, back_matrix[i]);
-        current = get_bit(c, back_matrix[i]) ? c : current;
-      }
+      R *= X[dependencies[d][i]];
+    }
+    R = sqrt(R);
 
-      // Empty row, advance to next.
-      if (count == 0)
-      {
-        --i;
-        continue;
-      }
-
-      // Underdermined, pick x[current] randomly.
-      x[current] = count > 1 ? rand() % 2 : get_bit(smooth.size(), back_matrix[i]);
-
-      for (long u = 0; u <= i; ++u)
-      {
-        if (get_bit(current, back_matrix[u]) == 1)
-        {
-          if (x[current] == 1) toggle_bit(smooth.size(), back_matrix[u]);
-          unset_bit(current, back_matrix[u]);
-        }
-      }
-
-      if (count == 1) --i;
+    // TODO: I think the code might be wrong from this point onwards
+    // it doesn't always find dependencies even though there are easy
+    // factors available
+    num b = 1;
+    for (unsigned int i = 0; i < smooth[dependencies[d][0]].size(); i++)
+    {
+      b *= smooth[dependencies[d][0]][i];
     }
 
-    // Combine factor base to find square.
-    a = 1, b = 1;
-    memset(combination, 0, sizeof(long) * factor_base.size());
-    for (unsigned long i = 0; i < smooth.size(); ++i)
+    num gcd = R - b;
+    mpz_gcd(gcd.get_mpz_t(), gcd.get_mpz_t(), n.get_mpz_t());
+    if (gcd != 1 && gcd != n)
     {
-      if (x[i] == 1)
-      {
-        for (unsigned long p = 0; p < smooth[i].size(); ++p) ++combination[smooth[i][p]];
-        b *= (X[i] + sqrt(n));
-      }
-    }
-
-    for (unsigned long p = 0; p < factor_base.size(); ++p)
-    {
-      for (auto i = 0; i < (combination[p] / 2); ++i)
-        a *= factor_base[p];
+     factors.insert(gcd);
     }
   }
-  b -= a;
+  if (factors.size() == 0)
+    cerr << "FAILED on " << n << endl;
 
-  num factor;
-  mpz_gcd(factor.get_mpz_t(), b.get_mpz_t(), n.get_mpz_t());
+  cerr << "  Found factor " << (*factors.rbegin()) << " with quadratic sieve." << endl;
 
-  cerr << "  Found factor " << factor << " with quadratic sieve." << endl;
-
-  return factor;
+  // TODO: return all factors
+  // right now it returns the biggest (last in the ordered set) factor
+  return factors.size() > 0 ? (*factors.rbegin()) : 0;
 }
 
 int main()
