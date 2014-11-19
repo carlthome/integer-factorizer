@@ -310,10 +310,9 @@ inline num quadratic_sieve(const num& n)
         a *= factor_base[p];
     }
   }
-  b -= a;
-
+  
   num factor;
-  mpz_gcd(factor.get_mpz_t(), b.get_mpz_t(), n.get_mpz_t());
+  mpz_gcd(factor.get_mpz_t(), num(b-a).get_mpz_t(), n.get_mpz_t());
   return factor;
 }
 
