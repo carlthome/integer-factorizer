@@ -11,8 +11,8 @@
 using namespace std;
 typedef mpz_class num;
 typedef function<num(num, num)> polynomial;
-const long SIEVE_WINDOW = 1000000;
-const long TRIAL_BOUND = 100000000;
+const long SIEVE_WINDOW = 10000000;
+const long TRIAL_BOUND = 1000000000;
 vector<num> primes;
 
 // Number of bits in a is approximately log_2(a). 
@@ -73,7 +73,7 @@ inline pair<num, num> tonelli_shanks(const num& n, const num& p)
 inline num quadratic_sieve(const num& n)
 {
   // Set smoothness bound with Torbjörn Granlund's magic formula.
-  const num B = ceil(3 * exp(0.5 * sqrt(log(n) * log(log(n)))));
+  const num B = ceil(exp(0.5 * sqrt(log(n) * log(log(n)))));
   cerr << "    Smoothness bound: " << B << endl;
 
   // Generate the factor base.
@@ -104,12 +104,10 @@ inline num quadratic_sieve(const num& n)
 
   // Sieve new chunks until we have enough smooth numbers.
   cerr << "    Sieving:" << endl;
-  float last_estimate = 0;
-  size_t next_estimate = 1;
-  size_t min_x = 0, max_x = SIEVE_WINDOW;
   vector<size_t> X;
   vector<float> Y(SIEVE_WINDOW, 0);
   vector<vector<long>> smooth; //TODO Replace with parity bits directly.
+  size_t min_x = 0, max_x = SIEVE_WINDOW;
   while (smooth.size() < factor_base.size() + 20)
   {
     static auto square = [](const num& n) { return n * n; };
@@ -117,29 +115,25 @@ inline num quadratic_sieve(const num& n)
       [](const num& n, const num& x) -> num { return square((sqrt(1 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(2 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(3 * n) + x)) - n; },
-      [](const num& n, const num& x) -> num { return square((sqrt(4 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(5 * n) + x)) - n; },
-      [](const num& n, const num& x) -> num { return square((sqrt(6 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(7 * n) + x)) - n; },
-      [](const num& n, const num& x) -> num { return square((sqrt(8 * n) + x)) - n; },
       [](const num& n, const num& x) -> num { return square((sqrt(9 * n) + x)) - n; },
     };
     for (const auto& Q : polynomials)
     {
       // Calculate Y vector of log approximations.
+      float estimate = 1, next_estimate = 0;
       for (unsigned long i = 1; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
-
-        // Only calculate log estimates if necessary.
-        if (next_estimate <= x)
+        // Only calculate log estimates if different enough, else just reuse the same estimate for all x:s.
+        if (abs(next_estimate - estimate) > 10e-6)
         {
-          auto y = Q(n, x);
-          last_estimate = log(y);
-          next_estimate *= 2;
-        }
+          estimate = log(Q(n, x));
+          next_estimate = log(Q(n, x + 1));
+        } 
 
-        Y[i] = last_estimate;
+        Y[i] = estimate;
       }
 
       // Sieve
@@ -166,7 +160,7 @@ inline num quadratic_sieve(const num& n)
       for (unsigned long i = 0; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
-        if (abs(Y[i]) < 0.1*log(n)) //TODO Set proper tolerance.
+        if (abs(Y[i]) < 10e-6)
         {
           //TODO Avoid duplicates from other polynomials.
           auto y = Q(n, x);
@@ -320,9 +314,6 @@ inline num quadratic_sieve(const num& n)
 
   num factor;
   mpz_gcd(factor.get_mpz_t(), b.get_mpz_t(), n.get_mpz_t());
-
-  cerr << "  Found factor " << factor << " with quadratic sieve." << endl;
-
   return factor;
 }
 
@@ -338,6 +329,7 @@ int main()
     primes.push_back(i);
     for (int j = i + i; j <= TRIAL_BOUND; j += i) is_prime[j] = false;
   }
+  cerr << "Initialized prime sieve for trial division." << endl;
 
   // Factor numbers.
   num number;
@@ -351,12 +343,12 @@ factorize:
     while (!factors.empty())
     {
       num factor = factors.top(); factors.pop();
-      cerr << endl << "Factoring " << factor << ":" << endl;
+      cerr << endl << "Factoring " << factor << " (" << mpz_sizeinbase(factor.get_mpz_t(), 10) << " digits):" << endl;
 
       // Print probable primes.
       if (mpz_probab_prime_p(factor.get_mpz_t(), 64))
       {
-        cerr << "  Number was prime." << endl;
+        cerr << "Found prime factor (" << mpz_sizeinbase(factor.get_mpz_t(), 10) << " digits): ";
         cout << factor << endl;
         product *= factor;
         goto factorize;
