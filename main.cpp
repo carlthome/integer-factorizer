@@ -13,7 +13,7 @@ typedef mpz_class num;
 typedef function<num(num, num)> polynomial;
 const long SIEVE_WINDOW = 1000000;
 const long TRIAL_BOUND = 1000000000;
-vector<long> primes;
+vector<num> primes;
 
 // Number of bits in a is approximately log_2(a). 
 inline float log(const num& a) { return mpz_sizeinbase(a.get_mpz_t(), 2); }
@@ -74,9 +74,9 @@ inline num quadratic_sieve(const num& n)
   for (const auto& prime : primes)
   {
     if (B <= prime) break;
-    if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
+    if (mpz_legendre(n.get_mpz_t(), prime.get_mpz_t()) == 1)
     {
-      factor_base.push_back(num(prime));
+      factor_base.push_back(prime);
     }
   }
   cerr << "    Factor base: " << factor_base.size() << endl;
@@ -141,7 +141,6 @@ inline num quadratic_sieve(const num& n)
         const auto val = log(factor_base[p].get_ui()) / log(2);
         while (idx1 < max_x) Y[idx1 - min_x] -= val, idx1 += factor_base[p].get_ui();
         while (idx2 < max_x) Y[idx2 - min_x] -= val, idx2 += factor_base[p].get_ui();
-        //TODO if (factor_base[p] == 2) break; // p has only one modular root
       }
 
       // Factor all values whose logarithms were reduced to approximately zero using trial division.
@@ -350,7 +349,7 @@ factorize:
         // Trial divide small primes.
         for (const auto& prime : primes)
         {
-          if (mpz_divisible_p(factor.get_mpz_t(), num(prime).get_mpz_t()))
+          if (mpz_divisible_p(factor.get_mpz_t(), prime.get_mpz_t()))
           {
             cerr << "  Trial division found prime " << prime << "." << endl;
             factors.push(prime);
