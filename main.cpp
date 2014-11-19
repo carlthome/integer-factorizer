@@ -131,7 +131,7 @@ inline num quadratic_sieve(const num& n)
         {
           estimate = log(Q(n, x));
           next_estimate = log(Q(n, x + 1));
-        } 
+        }
 
         Y[i] = estimate;
       }
