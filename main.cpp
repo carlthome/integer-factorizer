@@ -10,10 +10,11 @@
 #include <cassert>
 using namespace std;
 typedef mpz_class num;
+typedef unsigned long ul;
 typedef function<num(num, num)> polynomial;
 const long SIEVE_WINDOW = 10000000;
-const long TRIAL_BOUND = 1000000000;
-vector<num> primes;
+const long TRIAL_BOUND = 100000000;
+vector<ul> primes;
 
 // Number of bits in a is approximately log_2(a). 
 inline float log(const num& a) { return mpz_sizeinbase(a.get_mpz_t(), 2); }
@@ -81,7 +82,7 @@ inline num quadratic_sieve(const num& n)
   for (const auto& prime : primes)
   {
     if (B <= prime) break;
-    if (mpz_legendre(n.get_mpz_t(), prime.get_mpz_t()) == 1)
+    if (mpz_legendre(n.get_mpz_t(), num(prime).get_mpz_t()) == 1)
     {
       factor_base.push_back(prime);
     }
@@ -90,7 +91,7 @@ inline num quadratic_sieve(const num& n)
 
   // Calculate sieve index (where to start the sieve) for each factor base number.
   vector<pair<size_t, size_t>> indexes(0);
-  for (unsigned long p = 0; p < factor_base.size(); ++p)
+  for (ul p = 0; p < factor_base.size(); ++p)
   {
     // Solve the congruence x^2 = n (mod p) to find out where to start sieving.
     auto r = tonelli_shanks(n % factor_base[p], factor_base[p]);
@@ -123,7 +124,7 @@ inline num quadratic_sieve(const num& n)
     {
       // Calculate Y vector of log approximations.
       float estimate = 1, next_estimate = 0;
-      for (unsigned long i = 1; i < SIEVE_WINDOW; ++i)
+      for (ul i = 1; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
         // Only calculate log estimates if different enough, else just reuse the same estimate for all x:s.
@@ -157,7 +158,7 @@ inline num quadratic_sieve(const num& n)
       }
 
       // Factor all values whose logarithms were reduced to approximately zero using trial division.
-      for (unsigned long i = 0; i < SIEVE_WINDOW; ++i)
+      for (ul i = 0; i < SIEVE_WINDOW; ++i)
       {
         auto x = i + min_x;
         if (abs(Y[i]) < 10e-6)
@@ -166,7 +167,7 @@ inline num quadratic_sieve(const num& n)
           auto y = Q(n, x);
 
           vector<long> factorization;
-          for (unsigned long p = 0; p < factor_base.size(); ++p)
+          for (ul p = 0; p < factor_base.size(); ++p)
           {
             while (y % factor_base[p] == 0)
             {
@@ -202,24 +203,24 @@ inline num quadratic_sieve(const num& n)
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
   auto **matrix = new long*[factor_base.size()];
   auto row_words = (smooth.size() + sizeof(long)) / sizeof(long);
-  for (unsigned long i = 0; i < factor_base.size(); ++i)
+  for (ul i = 0; i < factor_base.size(); ++i)
   {
     matrix[i] = new long[row_words];
     memset(matrix[i], 0, row_words * sizeof(long));
   }
-  for (unsigned long s = 0; s < smooth.size(); ++s)
-    for (unsigned long p = 0; p < smooth[s].size(); ++p)
+  for (ul s = 0; s < smooth.size(); ++s)
+    for (ul p = 0; p < smooth[s].size(); ++p)
       toggle_bit(s, matrix[smooth[s][p]]);
   cerr << "    Created matrix" << endl;
 
   // Gauss elimination.
-  unsigned long i = 0, j = 0;
+  ul i = 0, j = 0;
   while (i < factor_base.size() && j < (smooth.size() + 1))
   {
     long maxi = i;
 
     // Find pivot element.
-    for (unsigned long k = i + 1; k < factor_base.size(); ++k)
+    for (ul k = i + 1; k < factor_base.size(); ++k)
     {
       if (get_bit(j, matrix[k]) == 1)
       {
@@ -231,11 +232,11 @@ inline num quadratic_sieve(const num& n)
     {
       swap(matrix[i], matrix[maxi]);
 
-      for (unsigned long u = i + 1; u < factor_base.size(); ++u)
+      for (ul u = i + 1; u < factor_base.size(); ++u)
       {
         if (get_bit(j, matrix[u]) == 1)
         {
-          for (unsigned long w = 0; w < row_words; ++w)
+          for (ul w = 0; w < row_words; ++w)
             matrix[u][w] ^= matrix[i][w];
         }
       }
@@ -247,7 +248,7 @@ inline num quadratic_sieve(const num& n)
 
   // A copy of matrix that we'long perform back-substitution on.
   long **back_matrix = new long*[factor_base.size()];
-  for (unsigned long i = 0; i < factor_base.size(); ++i) back_matrix[i] = new long[row_words];
+  for (ul i = 0; i < factor_base.size(); ++i) back_matrix[i] = new long[row_words];
   long *x = new long[smooth.size()];
   long *combination = new long[factor_base.size()];
 
@@ -255,7 +256,7 @@ inline num quadratic_sieve(const num& n)
   num a, b;
   while (a % n == b % n || a % n == (-b) % n + n)
   {
-    for (unsigned long i = 0; i < factor_base.size(); ++i) memcpy(back_matrix[i], matrix[i], row_words * sizeof(long));
+    for (ul i = 0; i < factor_base.size(); ++i) memcpy(back_matrix[i], matrix[i], row_words * sizeof(long));
     memset(x, 0, smooth.size() * sizeof(long));
 
     // Perform back-substitution.
@@ -264,7 +265,7 @@ inline num quadratic_sieve(const num& n)
     {
       // Count non-zero elements in current row.
       long count = 0, current = -1;
-      for (unsigned long c = 0; c < smooth.size(); ++c)
+      for (ul c = 0; c < smooth.size(); ++c)
       {
         count += get_bit(c, back_matrix[i]);
         current = get_bit(c, back_matrix[i]) ? c : current;
@@ -295,24 +296,24 @@ inline num quadratic_sieve(const num& n)
     // Combine factor base to find square.
     a = 1, b = 1;
     memset(combination, 0, sizeof(long) * factor_base.size());
-    for (unsigned long i = 0; i < smooth.size(); ++i)
+    for (ul i = 0; i < smooth.size(); ++i)
     {
       if (x[i] == 1)
       {
-        for (unsigned long p = 0; p < smooth[i].size(); ++p) ++combination[smooth[i][p]];
+        for (ul p = 0; p < smooth[i].size(); ++p) ++combination[smooth[i][p]];
         b *= (X[i] + sqrt(n));
       }
     }
 
-    for (unsigned long p = 0; p < factor_base.size(); ++p)
+    for (ul p = 0; p < factor_base.size(); ++p)
     {
       for (auto i = 0; i < (combination[p] / 2); ++i)
         a *= factor_base[p];
     }
   }
-  
+
   num factor;
-  mpz_gcd(factor.get_mpz_t(), num(b-a).get_mpz_t(), n.get_mpz_t());
+  mpz_gcd(factor.get_mpz_t(), num(b - a).get_mpz_t(), n.get_mpz_t());
   return factor;
 }
 
@@ -322,11 +323,12 @@ int main()
   bool *is_prime = new bool[TRIAL_BOUND];
   memset(is_prime, true, TRIAL_BOUND);
   is_prime[0] = is_prime[1] = false;
-  for (int i = 2; i <= sqrt(TRIAL_BOUND + 1); i++)
+  primes.push_back(2);
+  for (int i = 3; i < TRIAL_BOUND; i += 2)
   {
     if (!is_prime[i]) continue;
     primes.push_back(i);
-    for (int j = i + i; j <= TRIAL_BOUND; j += i) is_prime[j] = false;
+    for (int j = i + i; j < TRIAL_BOUND; j += i) is_prime[j] = false;
   }
   cerr << "Initialized prime sieve for trial division." << endl;
 
@@ -359,7 +361,7 @@ factorize:
         // Trial divide small primes.
         for (const auto& prime : primes)
         {
-          if (mpz_divisible_p(factor.get_mpz_t(), prime.get_mpz_t()))
+          if (mpz_divisible_p(factor.get_mpz_t(), num(prime).get_mpz_t()))
           {
             cerr << "  Trial division found prime " << prime << "." << endl;
             factors.push(prime);
@@ -372,11 +374,11 @@ factorize:
         if (mpz_perfect_power_p(factor.get_mpz_t()))
         {
           cerr << "  Avoiding perfect powers." << endl;
-          for (unsigned long n = 2; n < sqrt(factor); ++n)
+          for (ul n = 2; n < sqrt(factor); ++n)
           {
             num root, rem;
             mpz_rootrem(root.get_mpz_t(), rem.get_mpz_t(), factor.get_mpz_t(), n);
-            if (rem == 0) for (unsigned long i = 0; i < n; ++i) factors.push(root);
+            if (rem == 0) for (ul i = 0; i < n; ++i) factors.push(root);
           }
         }
         else
