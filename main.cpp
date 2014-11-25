@@ -198,8 +198,6 @@ inline num quadratic_sieve(const num& n)
   }
   cerr << "    Sieving completed" << endl;
 
-  //TODO Replace below with fast gauss.
-
   // Create parity matrix of exponent vectors by going through each factor in each smooth number.
   auto matrix = gf2(smooth.size(), factor_base.size());
 
@@ -222,17 +220,33 @@ inline num quadratic_sieve(const num& n)
     }
     R = sqrt(R);
 
-    // TODO: I think the code might be wrong from this point onwards
-    // it doesn't always find dependencies even though there are easy
-    // factors available
+  auto factors = set<num>();
+  cout << "      Found " << dependencies.size() << " dependencies" << endl;
+  for (unsigned long d = 0; d < dependencies.size(); d++)
+  {
+    num a = 1;
     num b = 1;
-    for (unsigned int i = 0; i < smooth[dependencies[d][0]].size(); i++)
+    for (unsigned long i = 0; i < dependencies[d].size(); i++)
     {
-      b *= smooth[dependencies[d][0]][i];
+      for (unsigned long j = 0; j < smooth[dependencies[d][i]].size(); j++)
+      {
+          a *= primes[smooth[dependencies[d][i]][j]];
+      }
+      for (unsigned long j = 0; j < factor_base.size(); j++)
+      {
+        if (matrix.get_bit(dependencies[d][i], j))
+        {
+          b *= factor_base[j];
+        }
+      }
     }
+    // temporary, remove when everything works
+    assert(sqrt(a) * sqrt(a) == a);
+    assert(sqrt(b) * sqrt(b) == b);
+    assert(a != b);
 
-    num gcd = R - b;
-    mpz_gcd(gcd.get_mpz_t(), gcd.get_mpz_t(), n.get_mpz_t());
+    num gcd;
+    mpz_gcd(gcd.get_mpz_t(), num(b - a).get_mpz_t(), n.get_mpz_t());
     if (gcd != 1 && gcd != n)
     {
      factors.insert(gcd);
