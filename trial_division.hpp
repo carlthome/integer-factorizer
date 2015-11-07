@@ -1,8 +1,3 @@
-#pragma once
-#include <vector>
-#include <cmath>
-using namespace std;
-
 inline vector<mpz_class> trial_division(const mpz_class& n)
 {
   vector<mpz_class> factors;
